@@ -1,0 +1,297 @@
+/* Send email v2 polish — scoped to platform root + composer */
+#senditto-platform-root[data-send-enhanced="true"] svg,
+.dashboard-content[data-send-enhanced="true"] svg,
+.se-modal svg,
+.se-toast svg {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  display: block !important;
+  flex: 0 0 18px !important;
+}
+
+#senditto-platform-root[data-send-enhanced="true"] button svg,
+#senditto-platform-root[data-send-enhanced="true"] span svg,
+.dashboard-content[data-send-enhanced="true"] button svg,
+.dashboard-content[data-send-enhanced="true"] span svg {
+  position: static !important;
+  inset: auto !important;
+  transform: none !important;
+}
+
+.se-select-trigger {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  overflow: visible !important;
+}
+
+.se-menu button {
+  min-height: 42px !important;
+}
+
+.se-field-top button,
+.se-side-head button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+
+.se-field-top button svg {
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+}
+
+.se-side-head .se-settings-button {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: #eaf3ff !important;
+  color: #2476f3 !important;
+  display: grid !important;
+  place-items: center !important;
+  cursor: pointer !important;
+}
+
+.se-mode {
+  gap: 3px;
+}
+
+.se-mode button {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 36px !important;
+  white-space: nowrap;
+}
+
+.se-mode button svg {
+  width: 15px !important;
+  height: 15px !important;
+  min-width: 15px !important;
+}
+
+.se-visual-editor {
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  background: #f7f9fd;
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+  min-height: 290px;
+}
+
+.se-block {
+  background: #fff;
+  border: 1px solid #dfe6f1;
+  border-radius: 11px;
+  padding: 17px;
+  box-shadow: 0 3px 12px #14264a08;
+  position: relative;
+}
+
+.se-block:hover {
+  border-color: #8ab5fa;
+}
+
+.se-block small {
+  display: block;
+  color: #8492a8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+}
+
+.se-block input,
+.se-block textarea {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  outline: 0;
+  color: #17233d;
+  box-sizing: border-box;
+}
+
+.se-block input {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.se-block textarea {
+  font: 500 14px/1.65 inherit;
+  resize: none;
+  min-height: 66px;
+}
+
+.se-block-button {
+  display: inline-flex;
+  border: 0;
+  border-radius: 9px;
+  background: #2476f3;
+  color: #fff;
+  padding: 11px 16px;
+  font-weight: 800;
+}
+
+.se-builder-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.se-add-block {
+  border: 1px dashed #9bbcf0 !important;
+  background: #f4f8ff !important;
+  color: #2476f3 !important;
+}
+
+.se-code-workspace {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #d9e2ef;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 310px;
+}
+
+.se-code-workspace textarea {
+  border: 0 !important;
+  border-radius: 0 !important;
+  min-height: 310px !important;
+  background: #101a31 !important;
+  color: #d7e7ff !important;
+  font: 500 13px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+
+.se-code-preview {
+  padding: 24px;
+  background: #fff;
+  border-left: 1px solid #d9e2ef;
+}
+
+.se-code-preview small {
+  font-weight: 800;
+  color: #2476f3;
+}
+
+.se-code-preview h3 {
+  font-size: 22px;
+  margin: 12px 0;
+}
+
+.se-code-preview p {
+  color: #64738c;
+  line-height: 1.6;
+}
+
+.se-mode-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #687892;
+  font-size: 12px;
+  margin-top: 9px;
+}
+
+.se-advanced-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.se-advanced-grid label {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.se-advanced-grid label.full {
+  grid-column: 1 / -1;
+}
+
+.se-advanced-grid input,
+.se-advanced-grid select {
+  margin-top: 7px;
+}
+
+.se-provider-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+  margin: 14px 0;
+}
+
+.se-provider {
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  padding: 13px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+}
+
+.se-provider.active {
+  border-color: #3983f5;
+  background: #eef5ff;
+}
+
+.se-provider b,
+.se-provider small {
+  display: block;
+}
+
+.se-provider small {
+  color: #7c8aa1;
+  margin-top: 4px;
+}
+
+/* Composer page shell */
+.se-page {
+  max-width: 1420px;
+  margin: 0 auto;
+}
+
+/* Dynamic quality ring via CSS variable */
+.se-score-ring {
+  background: conic-gradient(#32c89a 0 calc(var(--se-score, 40) * 1%), #e8eef5 0) !important;
+}
+
+@media (max-width: 760px) {
+  .se-mode {
+    width: 100%;
+    overflow: auto;
+  }
+
+  .se-mode button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .se-code-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .se-code-preview {
+    border-left: 0;
+    border-top: 1px solid #d9e2ef;
+  }
+
+  .se-advanced-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .se-advanced-grid label.full {
+    grid-column: auto;
+  }
+
+  .se-provider-row {
+    grid-template-columns: 1fr;
+  }
+}

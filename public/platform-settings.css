@@ -1,0 +1,408 @@
+/* Full Settings — fixed left nav, scrolling content, compliance layout */
+
+/* Fill the platform root; do not grow the whole page with content */
+.st-page {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 0 12px !important;
+  box-sizing: border-box;
+  overflow: hidden !important;
+}
+
+.st-page-chrome {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.st-page .st-head {
+  margin-bottom: 14px !important;
+}
+
+/* Two-column shell: left nav fixed, right panel scrolls */
+.st-page .st-layout {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  align-items: stretch !important;
+  display: grid !important;
+  grid-template-columns: 240px minmax(0, 1fr) !important;
+  gap: 14px !important;
+  overflow: hidden !important;
+}
+
+/* Settings section nav — stays put while content scrolls */
+.st-nav {
+  position: sticky !important;
+  top: 0 !important;
+  align-self: stretch !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+  padding: 10px !important;
+}
+
+.st-nav button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1.25;
+  width: 100%;
+}
+
+.st-nav button small {
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b98a9;
+}
+
+.st-nav button.active small {
+  color: #5b8fd9;
+}
+
+/* Right column: card frame + inner scroller only */
+.st-main {
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.st-main-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 22px 26px 32px;
+}
+
+.st-section h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.st-h3 {
+  margin: 22px 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #24344f;
+}
+
+.st-form {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  margin: 14px 0 8px;
+}
+
+.st-form .st-field,
+.st-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.st-form .full {
+  grid-column: 1 / -1;
+}
+
+.st-form .pp-label-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5a6b84;
+}
+
+.st-form .pp-input,
+.st-form .pp-textarea {
+  width: 100%;
+}
+
+.st-toggles {
+  display: flex;
+  flex-direction: column;
+  margin: 8px 0 4px;
+}
+
+.st-switch {
+  align-items: flex-start !important;
+  gap: 16px;
+  padding: 14px 0 !important;
+  border-top: 1px solid #edf1f6;
+}
+
+.st-switch:first-child {
+  border-top: 0;
+}
+
+.st-switch b {
+  display: block;
+  font-size: 14px;
+  color: #18243d;
+}
+
+.st-switch small {
+  display: block;
+  margin-top: 4px;
+  color: #71809a;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.st-law {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef5ff;
+  color: #1d5fbf;
+  font-size: 10.5px;
+  font-style: normal;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.st-callout {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0 16px;
+  border: 1px solid #e2e8f2;
+  background: #f7faff;
+}
+
+.st-callout strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+  color: #17345f;
+}
+
+.st-callout p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #4a5d78;
+}
+
+.st-callout-warn {
+  background: #fff9ef;
+  border-color: #f0d9a8;
+}
+
+.st-callout-warn strong {
+  color: #8a5a00;
+}
+
+.st-callout-ok {
+  background: #eefbf4;
+  border-color: #b7e7cb;
+}
+
+.st-callout-ok strong {
+  color: #0f6b45;
+}
+
+.st-callout-danger {
+  background: #fff1f1;
+  border-color: #f0b8b8;
+}
+
+.st-callout-danger strong {
+  color: #a32020;
+}
+
+.st-callout-info {
+  background: #f4f8ff;
+  border-color: #d5e4fb;
+}
+
+.st-checklist ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: #31445f;
+  font-size: 13.5px;
+  line-height: 1.7;
+}
+
+.st-actions {
+  margin-top: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.st-score-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #eaf3ff;
+  color: #1d5fbf;
+  font: 750 12px/1 Manrope, system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.st-score-danger {
+  background: #ffeaea;
+  color: #b42318;
+}
+
+.st-frameworks .st-switch b {
+  font-size: 13px;
+}
+
+/* Rights cards */
+.st-rights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+}
+
+.st-right-card {
+  border: 1px solid #e5ebf3;
+  border-radius: 14px;
+  padding: 16px;
+  background: #fbfcfe;
+}
+
+.st-right-card h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+.st-right-card p {
+  margin: 0 0 14px;
+  color: #62758f;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.st-req-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.st-req-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f5f8fc;
+  font-size: 12.5px;
+}
+
+.st-req-row b {
+  color: #1a2b45;
+}
+
+.st-req-row span,
+.st-req-row em {
+  color: #6b7c94;
+  font-style: normal;
+}
+
+/* Danger zone blocks */
+.st-danger-block {
+  border: 1px solid #f0d0d0;
+  background: #fffafa;
+  border-radius: 14px;
+  padding: 14px 16px 16px;
+  margin: 14px 0;
+}
+
+.st-danger-block .st-h3 {
+  margin-top: 0;
+  color: #8a1f1f;
+}
+
+.st-check {
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  font-size: 13px;
+  color: #3a4b63;
+  line-height: 1.45;
+}
+
+.st-check input {
+  margin-top: 3px;
+  flex: none;
+}
+
+.pp-btn.danger {
+  background: #c43333 !important;
+  border-color: #c43333 !important;
+  color: #fff !important;
+}
+
+.pp-btn.danger:hover {
+  background: #a82828 !important;
+  border-color: #a82828 !important;
+}
+
+.st-delete-modal .pp-dialog {
+  max-width: min(640px, 100%);
+}
+
+@media (max-width: 1100px) {
+  .st-page .st-layout {
+    grid-template-columns: 200px minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .st-form {
+    grid-template-columns: 1fr;
+  }
+  .st-rights-grid {
+    grid-template-columns: 1fr;
+  }
+  .pp-head-actions {
+    flex-wrap: wrap;
+  }
+  /* Stack: nav becomes horizontal strip; content scrolls below */
+  .st-page .st-layout {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+  }
+  .st-nav {
+    position: relative !important;
+    height: auto !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 4px;
+  }
+  .st-nav button {
+    white-space: nowrap;
+    width: auto;
+    min-width: max-content;
+  }
+  .st-nav button small {
+    display: none;
+  }
+  .st-main {
+    min-height: 0 !important;
+  }
+}

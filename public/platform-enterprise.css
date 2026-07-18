@@ -1,0 +1,154 @@
+/* Enterprise product surface */
+
+.ent-page .ent-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.ent-feature {
+  padding: 18px;
+}
+
+.ent-feature h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.ent-feature p {
+  margin: 0 0 14px;
+  color: #6b7a90;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ent-panel {
+  padding: 18px 20px;
+}
+
+.ent-panel h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.ent-muted {
+  color: #6b7a90;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0 0 12px;
+}
+
+.ent-steps {
+  margin: 0;
+  padding-left: 18px;
+  color: #31445f;
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+.ent-settings {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.ent-settings-nav {
+  padding: 10px;
+  height: max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ent-settings-nav button {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 12px 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: #5a6b84;
+  cursor: pointer;
+}
+
+.ent-settings-nav button.active,
+.ent-settings-nav button:hover {
+  background: #eaf3ff;
+  color: #2476f3;
+}
+
+.ent-settings-main {
+  padding: 22px;
+  min-width: 0;
+}
+
+.ent-settings-main h2 {
+  margin: 0 0 8px;
+}
+
+.ent-toggles .pp-switch-row {
+  border-top: 1px solid #edf1f6;
+  padding: 14px 0;
+}
+
+.ent-meter {
+  height: 12px;
+  border-radius: 999px;
+  background: #e8eef6;
+  overflow: hidden;
+  margin: 12px 0 8px;
+}
+
+.ent-meter > i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #2476f3, #35c49a);
+  border-radius: 999px;
+}
+
+.ent-matrix {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.ent-matrix > div {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(4, 0.7fr);
+  gap: 8px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.ent-matrix > div b {
+  font-size: 12px;
+  color: #5d6e88;
+}
+
+@media (max-width: 1100px) {
+  .ent-page .ent-grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ent-settings {
+    grid-template-columns: 1fr;
+  }
+  .ent-settings-nav {
+    flex-direction: row;
+    overflow: auto;
+  }
+  .ent-settings-nav button {
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 720px) {
+  .ent-page .ent-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .ent-matrix > div {
+    grid-template-columns: 1.2fr repeat(4, 0.55fr);
+    font-size: 11px;
+  }
+}
