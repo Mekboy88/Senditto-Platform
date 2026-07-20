@@ -386,3 +386,5 @@ body.senditto-help-open .docs-popover {
 .top-dismiss {
   z-index: 70 !important;
 }
+
+/* Database UI is a SEPARATE project (senditto-database-studio) — never re-add to this platform */

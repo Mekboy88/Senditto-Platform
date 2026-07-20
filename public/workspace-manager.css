@@ -152,7 +152,12 @@
 
 .wm-danger h3{color:#c9364a}
 
-.wm-modal{position:fixed;inset:0;z-index:6500;display:grid;place-items:center;padding:22px}
+/* Modal stays inside #senditto-platform-root (project), not browser tab chrome */
+#senditto-platform-root{position:relative}
+#senditto-platform-root[data-workspace-manager="true"]{min-height:70vh}
+.wm-modal{position:absolute;inset:0;z-index:6500;display:grid;place-items:center;padding:22px}
+#senditto-platform-root .wm-modal{position:absolute}
+body>.wm-modal{position:fixed}
 
 .wm-backdrop{position:absolute;inset:0;border:0;background:#0b183b66;backdrop-filter:blur(4px)}
 

@@ -56,7 +56,7 @@
     h.dataset.workspaceManager = "true";
     const memberCount = new Set(list.flatMap((x) => (x.members || []).map((m) => m[1] || m.email))).size;
     const envCount = list.reduce((a, x) => a + (x.envs || []).length, 0);
-    h.innerHTML = `<div class="wm-page"><div class="wm-head"><div><small class="wm-kicker">WORKSPACE CONTROL</small><h1>Manage workspaces</h1><p>Configure teams, environments, sending and security from one place.</p></div><div class="wm-head-actions"><button class="wm-btn" data-wm-audit>${icon("shield")} View audit log</button><button class="wm-btn primary" data-wm-create>${icon("plus")} Create workspace</button></div></div><div class="wm-stats">${stat("settings", "Workspaces", list.length)}${stat("users", "Team members", memberCount)}${stat("server", "Environments", envCount)}${stat("shield", "Security", w.security?.mfa ? "MFA on" : "Basic")}</div><div class="wm-layout"><aside class="wm-card wm-workspace-list"><div class="wm-list-title">YOUR WORKSPACES</div>${list
+    h.innerHTML = `<div class="wm-page"><div class="wm-head"><div><small class="wm-kicker">YOUR PRODUCT</small><h1>Your workspaces</h1><p>These are your user workspaces — teams, environments, sending and security for your account.</p></div><div class="wm-head-actions"><button class="wm-btn" data-wm-audit>${icon("shield")} View audit log</button><button class="wm-btn primary" data-wm-create>${icon("plus")} Create workspace</button></div></div><div class="wm-stats">${stat("settings", "Workspaces", list.length)}${stat("users", "Team members", memberCount)}${stat("server", "Environments", envCount)}${stat("shield", "Security", w.security?.mfa ? "MFA on" : "Basic")}</div><div class="wm-layout"><aside class="wm-card wm-workspace-list"><div class="wm-list-title">YOUR WORKSPACES</div>${list
       .map(
         (x) =>
           `<button class="wm-workspace ${x.id === w.id ? "active" : ""}" data-wm-select="${esc(x.id)}">${avatar(x)}<div><b>${esc(x.name)}</b><small>${esc(x.type)}</small></div>${x.id === w.id ? icon("check") : ""}</button>`
@@ -112,7 +112,7 @@
       const sec = w.security || {};
       return `<section class="wm-section wm-security-score"><span>${sec.mfa ? "90" : "60"}</span><div><h3>Workspace security</h3><p>${sec.mfa ? "MFA recommended settings are enabled." : "Enable MFA and domain lock for stronger protection."}</p></div></section><section class="wm-section">${toggle("mfa", "Require multi-factor authentication", "Enforce MFA for administrators and developers", !!sec.mfa)}${toggle("domainLock", "Domain-change protection", "Require owner confirmation for DNS and domain changes", !!sec.domainLock)}${toggle("approvals", "Two-person production approval", "Require approval before production-key changes", !!sec.approvals)}${toggle("audit", "Extended audit retention", "Keep security and configuration events for 12 months", !!sec.audit)}</section><section class="wm-section"><div class="wm-card-head"><div><h3>Active sessions and API access</h3><p>Review trusted devices, API keys and recent security events.</p></div><button class="wm-btn" data-wm-sessions>Review access</button></div></section>`;
     }
-    return `<section class="wm-section"><div class="wm-card-head"><div><h3>Workspace profile</h3><p>Basic identity and regional configuration.</p></div><button class="wm-btn" data-wm-logo>Change icon</button></div><div class="wm-form"><label>Workspace name<input class="wm-input" data-wm-name value="${esc(w.name)}"></label><label>Workspace type<select class="wm-select" data-wm-type><option ${w.type === "Developer workspace" ? "selected" : ""}>Developer workspace</option><option ${w.type === "Marketing workspace" ? "selected" : ""}>Marketing workspace</option><option ${w.type === "Business workspace" ? "selected" : ""}>Business workspace</option></select></label><label>Primary region<select class="wm-select" data-wm-region><option value="">Not set</option><option ${w.region === "Europe (London)" ? "selected" : ""}>Europe (London)</option><option ${w.region === "North America (Virginia)" ? "selected" : ""}>North America (Virginia)</option><option ${w.region === "Asia Pacific (Singapore)" ? "selected" : ""}>Asia Pacific (Singapore)</option></select></label><label>Timezone<input class="wm-input" data-wm-timezone value="${esc(w.timezone || "")}"></label><label class="full">Workspace ID<input class="wm-input" value="${esc(w.id)}" readonly></label></div><div class="wm-actions" style="margin-top:17px"><button class="wm-btn primary" data-wm-save-profile>Save changes</button></div></section><section class="wm-section wm-danger"><div class="wm-card-head"><div><h3>Delete workspace</h3><p>Permanently remove this workspace from local platform data.</p></div><button class="wm-btn danger" data-wm-delete>Delete workspace</button></div></section>`;
+    return `<section class="wm-section"><div class="wm-card-head"><div><h3>Workspace profile</h3><p>Name, type, region and timezone for this workspace of yours.</p></div><button class="wm-btn" data-wm-logo>Change icon</button></div><div class="wm-form"><label>Workspace name<input class="wm-input" data-wm-name value="${esc(w.name)}"></label><label>Workspace type<select class="wm-select" data-wm-type><option ${w.type === "Developer workspace" ? "selected" : ""}>Developer workspace</option><option ${w.type === "Marketing workspace" ? "selected" : ""}>Marketing workspace</option><option ${w.type === "Business workspace" ? "selected" : ""}>Business workspace</option><option ${w.type === "Enterprise workspace" ? "selected" : ""}>Enterprise workspace</option></select></label><label>Primary region<select class="wm-select" data-wm-region><option value="">Not set</option><option ${w.region === "Europe (London)" ? "selected" : ""}>Europe (London)</option><option ${w.region === "North America (Virginia)" ? "selected" : ""}>North America (Virginia)</option><option ${w.region === "Asia Pacific (Singapore)" ? "selected" : ""}>Asia Pacific (Singapore)</option></select></label><label>Timezone<input class="wm-input" data-wm-timezone value="${esc(w.timezone || "")}"></label><label class="full">Workspace ID<input class="wm-input" value="${esc(w.id)}" readonly></label></div><div class="wm-actions" style="margin-top:17px"><button class="wm-btn primary" data-wm-save-profile>Save changes</button></div></section><section class="wm-section wm-danger"><div class="wm-card-head"><div><h3>Delete workspace</h3><p>${window.SendittoAPI?.isLive?.() ? "Removes this workspace from the live control database (must have no linked domains/keys/messages)." : "Permanently remove this workspace from local platform data."}</p></div><button class="wm-btn danger" data-wm-delete>Delete workspace</button></div></section>`;
   }
 
   function toggle(k, title, copy, on) {
@@ -121,26 +121,36 @@
 
   function modal(content, wide = false) {
     document.querySelector(".wm-modal")?.remove();
-    document.body.insertAdjacentHTML(
+    // Keep popups inside the platform root (project UI), not the browser tab chrome
+    const mount = host() || document.body;
+    mount.insertAdjacentHTML(
       "beforeend",
       `<div class="wm-modal"><button class="wm-backdrop" data-wm-close></button><section class="wm-dialog ${wide ? "wide" : ""}"><button class="wm-close" data-wm-close>${icon("close")}</button>${content}</section></div>`
     );
-    const m = document.querySelector(".wm-modal");
+    const m = mount.querySelector(".wm-modal");
     m.querySelectorAll("[data-wm-close]").forEach((b) => (b.onclick = () => m.remove()));
     return m;
   }
 
   function createWorkspace() {
     const m = modal(
-      `<div class="wm-modal-icon">${icon("plus")}</div><h2>Create workspace</h2><p>Set up a separate team, environment and sending configuration.</p><form class="wm-form"><label>Workspace name<input class="wm-input" name="name" placeholder="e.g. Product team" required></label><label>Workspace type<select class="wm-select" name="type"><option>Developer workspace</option><option>Marketing workspace</option><option>Business workspace</option></select></label><label>Primary region<select class="wm-select" name="region"><option value="">Not set</option><option>Europe (London)</option><option>North America (Virginia)</option><option>Asia Pacific (Singapore)</option></select></label><label>Timezone<input class="wm-input" name="timezone" value="${esc(Intl.DateTimeFormat().resolvedOptions().timeZone || "")}"></label></form><div class="wm-modal-actions"><button class="wm-btn" data-wm-close>Cancel</button><button class="wm-btn primary" data-wm-create-save>Create workspace</button></div>`
+      `<div class="wm-modal-icon">${icon("plus")}</div><h2>Create your workspace</h2><p>A workspace is your product home — team, environments, and sending. It belongs to you as a user, not to platform staff.</p><form class="wm-form"><label>Workspace name<input class="wm-input" name="name" placeholder="e.g. Product team" required></label><label>Workspace type<select class="wm-select" name="type"><option>Developer workspace</option><option>Marketing workspace</option><option>Business workspace</option><option>Enterprise workspace</option></select></label><label>Primary region<select class="wm-select" name="region"><option value="">Not set</option><option>Europe (London)</option><option>North America (Virginia)</option><option>Asia Pacific (Singapore)</option></select></label><label>Timezone<input class="wm-input" name="timezone" value="${esc(Intl.DateTimeFormat().resolvedOptions().timeZone || "")}"></label></form><div class="wm-modal-actions"><button class="wm-btn" data-wm-close>Cancel</button><button class="wm-btn primary" data-wm-create-save>Create workspace</button></div>`
     );
-    m.querySelector("[data-wm-create-save]").onclick = () => {
+    m.querySelector("[data-wm-create-save]").onclick = async () => {
       const f = m.querySelector("form");
       if (!f.reportValidity()) return;
-      store().createWorkspace(Object.fromEntries(new FormData(f)));
-      m.remove();
-      render();
-      toast("Workspace created");
+      const btn = m.querySelector("[data-wm-create-save]");
+      btn.disabled = true;
+      try {
+        const result = store().createWorkspace(Object.fromEntries(new FormData(f)));
+        if (result && typeof result.then === "function") await result;
+        m.remove();
+        render();
+        toast(window.SendittoAPI?.isLive?.() ? "Workspace created (live database)" : "Workspace created");
+      } catch (err) {
+        btn.disabled = false;
+        toast(err.message || "Could not create workspace");
+      }
     };
   }
 
@@ -336,11 +346,22 @@
     const input = m.querySelector("[data-wm-confirm]");
     const button = m.querySelector("[data-wm-delete-confirm]");
     input.oninput = () => (button.disabled = input.value !== w.name);
-    button.onclick = () => {
-      store().deleteWorkspace(w.id);
-      m.remove();
-      render();
-      toast("Workspace deleted");
+    button.onclick = async () => {
+      button.disabled = true;
+      try {
+        const result = store().deleteWorkspace(w.id);
+        const ok = result && typeof result.then === "function" ? await result : result;
+        if (ok === false) {
+          button.disabled = false;
+          return;
+        }
+        m.remove();
+        render();
+        toast(window.SendittoAPI?.isLive?.() ? "Workspace deleted (live database)" : "Workspace deleted");
+      } catch (err) {
+        button.disabled = false;
+        toast(err.message || "Could not delete workspace");
+      }
     };
   }
 
@@ -368,15 +389,24 @@
       render();
       setTimeout(() => host().querySelector("[data-wm-name]")?.focus(), 0);
     });
-    h.querySelector("[data-wm-save-profile]")?.addEventListener("click", () => {
-      store().updateWorkspace(w.id, {
-        name: h.querySelector("[data-wm-name]").value,
-        type: h.querySelector("[data-wm-type]").value,
-        region: h.querySelector("[data-wm-region]").value,
-        timezone: h.querySelector("[data-wm-timezone]").value,
-      });
-      render();
-      toast("Workspace profile saved");
+    h.querySelector("[data-wm-save-profile]")?.addEventListener("click", async () => {
+      try {
+        store().updateWorkspace(w.id, {
+          name: h.querySelector("[data-wm-name]").value,
+          type: h.querySelector("[data-wm-type]").value,
+          region: h.querySelector("[data-wm-region]").value,
+          timezone: h.querySelector("[data-wm-timezone]").value,
+        });
+        // Allow async API bridge a moment, then re-hydrate view
+        if (window.SendittoAPI?.isLive?.()) {
+          await new Promise((r) => setTimeout(r, 350));
+          await window.SendittoAPI.hydrateFromServer?.().catch(() => {});
+        }
+        render();
+        toast(window.SendittoAPI?.isLive?.() ? "Profile saved (live database)" : "Workspace profile saved");
+      } catch (err) {
+        toast(err.message || "Could not save profile");
+      }
     });
     h.querySelectorAll("[data-wm-toggle]").forEach((b) => {
       b.onclick = () => {

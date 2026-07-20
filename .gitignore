@@ -30,6 +30,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# local operator secrets (never commit)
+/public/local-db-config.js
+/public/local-platform-config.js
+/local-db-config.js
+/local-platform-config.js
+
 # vercel
 .vercel
 
