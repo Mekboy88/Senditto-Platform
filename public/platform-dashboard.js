@@ -368,7 +368,7 @@ client.emails.send(
       { label: "Bounced", value: fmtCompact(m.bounced), series: arr("bounced"), color: "#dc2626", sub: m.sent ? `${bounceRate.toFixed(1)}% of sent` : "—", warn: bounceRate > 4 },
     ];
     const kpis = `
-      <div class="sd-kpis3 ${isEmpty ? "" : "overlap"}">
+      <div class="sd-kpis3">
         ${kpiDefs.map((k) => `
           <div class="sd-kpi3 ${k.warn ? "warn" : ""}">
             <div class="sd-kpi3-top">
