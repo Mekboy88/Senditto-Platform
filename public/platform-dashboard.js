@@ -1,9 +1,15 @@
 /**
  * Overview dashboard v2 — premium workspace home.
- * Loads after overview-realtime.js and takes over the "overview" route with a
- * richer layout: KPI cards with sparklines, a 14-day activity chart, setup
- * checklist, quick actions, recent messages and an API quick-start card.
- * All charts are dependency-free inline SVG. Empty-by-default friendly.
+ * Loads after overview-realtime.js and takes over the "overview" route.
+ *
+ * Two deliberate states:
+ *  - Empty workspace  → welcome hero + setup checklist + API quick-start.
+ *    No zero-value KPI noise, no empty tables.
+ *  - Active workspace → KPI cards with true per-day sparklines, activity
+ *    chart, actionable insights (pending domains / elevated bounces),
+ *    stream mix, recent messages, usage meter and workspace quick-stats.
+ * All charts are dependency-free inline SVG. No demo content unless the
+ * user loads the clearly-labelled sample dataset.
  */
 (() => {
   const S = () => window.SendittoStore;
@@ -31,13 +37,12 @@
         hook: '<path d="M18 16.5a4 4 0 1 1-3.5-6.5V6a3 3 0 1 0-3-3"/><path d="m14 7 2 3 3-2"/>',
         shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M9.5 11.5 11 13l3.5-3.5"/>',
         trash: '<path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7"/>',
-        layers: '<path d="m12 2 9 5-9 5-9-5Z"/><path d="m3 12 9 5 9-5"/>',
+        alert: '<path d="M12 9v4m0 4h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>',
+        wave: '<path d="M3 12c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 3 2"/>',
       }[n] || ""
     }</svg>`;
 
-  function dayKey(iso) {
-    return (iso || "").slice(0, 10);
-  }
+  /* ---------- data helpers ---------- */
 
   function lastDays(n) {
     const out = [];
@@ -50,23 +55,30 @@
   }
 
   function bucket(messages, days) {
-    const map = Object.fromEntries(days.map((d) => [d, { total: 0, delivered: 0, failed: 0 }]));
+    const map = Object.fromEntries(
+      days.map((d) => [d, { total: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, failed: 0 }])
+    );
     for (const m of messages) {
-      const k = dayKey(m.createdAt);
-      if (!map[k]) continue;
-      map[k].total += 1;
-      if (/delivered|opened|clicked/i.test(m.status || "")) map[k].delivered += 1;
-      if (/bounce|failed/i.test(m.status || "")) map[k].failed += 1;
+      const k = (m.createdAt || "").slice(0, 10);
+      const b = map[k];
+      if (!b) continue;
+      const st = String(m.status || "");
+      b.total += 1;
+      if (/delivered|opened|clicked/i.test(st)) b.delivered += 1;
+      if (/opened|clicked/i.test(st)) b.opened += 1;
+      if (/clicked/i.test(st)) b.clicked += 1;
+      if (/bounce/i.test(st)) b.bounced += 1;
+      if (/bounce|failed/i.test(st)) b.failed += 1;
     }
     return days.map((d) => ({ day: d, ...map[d] }));
   }
 
-  function sparkline(values, w = 120, h = 34) {
+  function sparkline(values, tone = "blue", w = 120, h = 34) {
     const max = Math.max(1, ...values);
     const step = values.length > 1 ? w / (values.length - 1) : w;
     const pts = values.map((v, i) => `${(i * step).toFixed(1)},${(h - 3 - (v / max) * (h - 8)).toFixed(1)}`);
     const area = `M0,${h} L${pts.join(" L")} L${w},${h} Z`;
-    return `<svg class="sd-spark" style="width:100%;height:${h}px;display:block" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    return `<svg class="sd-spark sd-tone-${tone}" style="width:100%;height:${h}px;display:block;background:transparent" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
       <path class="sd-spark-area" d="${area}"/>
       <polyline class="sd-spark-line" points="${pts.join(" ")}"/>
     </svg>`;
@@ -135,10 +147,10 @@
     return `<span class="sd-chip ${tone}">${esc(status || "—")}</span>`;
   }
 
-  function pctDelta(cur, prev) {
-    if (!prev) return cur ? { txt: "new", up: true } : { txt: "—", up: null };
-    const d = ((cur - prev) / prev) * 100;
-    return { txt: `${d >= 0 ? "+" : ""}${d.toFixed(0)}%`, up: d >= 0 };
+  function fmtCompact(n) {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`;
+    if (n >= 10_000) return `${Math.round(n / 1000)}k`;
+    return Number(n).toLocaleString();
   }
 
   function codeSamples(apiKeyMasked) {
@@ -178,6 +190,8 @@ client.emails.send(
 
   let codeTab = "curl";
 
+  /* ---------- render ---------- */
+
   function render(root) {
     const s = S();
     if (!s) throw new Error("Platform store is still loading. Click Try again.");
@@ -190,12 +204,20 @@ client.emails.send(
     const buckets = bucket(messages, days);
     const totals = buckets.map((b) => b.total);
     const delivered = buckets.map((b) => b.delivered);
+    const opened = buckets.map((b) => b.opened);
+    const clicked = buckets.map((b) => b.clicked);
+    const bounced = buckets.map((b) => b.bounced);
     const failed = buckets.map((b) => b.failed);
 
     const half = Math.floor(buckets.length / 2);
     const curHalf = totals.slice(half).reduce((a, b) => a + b, 0);
     const prevHalf = totals.slice(0, half).reduce((a, b) => a + b, 0);
-    const delta = pctDelta(curHalf, prevHalf);
+    const deltaTxt = prevHalf
+      ? `${curHalf >= prevHalf ? "+" : ""}${(((curHalf - prevHalf) / prevHalf) * 100).toFixed(0)}% vs previous ${half}d`
+      : curHalf
+        ? "first sends this period"
+        : "—";
+    const deltaUp = prevHalf ? curHalf >= prevHalf : null;
 
     const hour = new Date().getHours();
     const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -204,48 +226,43 @@ client.emails.send(
     const hasKey = m.activeKeys > 0;
     const hasDomain = m.verifiedDomains > 0;
     const hasSent = m.sent > 0;
-    const hasTeam = (s.list("teamInvites") || []).length > 0 || ((s.currentWorkspace?.()?.members || []).length > 1);
+    const hasTeam = (s.list("teamInvites") || []).length > 0 || ((ws.members || []).length > 1);
     const setup = [
       { done: hasKey, label: "Create an API key", route: "api", icon: "key" },
       { done: hasDomain, label: "Verify a sending domain", route: "domains", icon: "globe" },
       { done: hasSent, label: "Send your first email", route: "send", icon: "send" },
       { done: hasTeam, label: "Invite your team", route: "team", icon: "users" },
     ];
-    const doneCount = setup.filter(x => x.done).length;
+    const doneCount = setup.filter((x) => x.done).length;
     const isEmpty = !hasSent && !hasKey && m.contacts === 0;
     const seeded = window.SendittoDemo?.isSeeded?.() || false;
 
     const firstKey = s.list("keys").find((k) => /active/i.test(k.status || ""));
     const samples = codeSamples(firstKey?.masked);
 
-    const kpis = [
-      { label: "Emails sent", value: m.sent, spark: totals, sub: `${delta.txt} vs previous`, up: delta.up },
-      { label: "Delivery rate", value: m.deliveryRate, spark: delivered, sub: `${m.delivered} delivered` },
-      { label: "Open rate", value: m.openRate, spark: delivered.map((v, i) => Math.min(v, buckets[i].delivered)), sub: `${m.opened} opened` },
-      { label: "Click rate", value: m.clickRate, spark: delivered, sub: `${m.clicked} clicked` },
-      { label: "Bounced", value: m.bounced, spark: failed, sub: m.sent ? `${((m.bounced / m.sent) * 100).toFixed(1)}% of sent` : "—", tone: m.bounced ? "bad" : "" },
-    ];
+    /* ----- building blocks ----- */
 
-    const recent = messages.slice(0, 8);
-
-    root.innerHTML = `
-    <div class="sd-page">
+    const headHtml = `
       <div class="sd-head">
         <div>
           <small class="pp-kicker">${esc(today.toUpperCase())}</small>
-          <h1>${esc(greeting)}${ws?.name ? `, ${esc(ws.name)}` : ""}</h1>
-          <p>Everything your workspace sent, delivered and earned — live.</p>
+          <h1>${esc(greeting)}${isEmpty ? " 👋" : ""}</h1>
+          <p>${isEmpty
+            ? `Let's get <b>${esc(ws.name || "your workspace")}</b> sending its first email.`
+            : `Everything <b>${esc(ws.name || "your workspace")}</b> sent, delivered and earned — live.`}</p>
         </div>
         <div class="sd-head-actions">
           ${seeded
             ? `<button class="sd-btn ghost" data-act="clear-demo">${icon("trash")} Remove sample data</button>`
-            : `<button class="sd-btn ghost" data-act="seed-demo">${icon("spark")} Load sample data</button>`}
-          <button class="sd-btn" data-nav="analytics">Open analytics</button>
+            : isEmpty
+              ? ""
+              : `<button class="sd-btn ghost" data-act="seed-demo">${icon("spark")} Load sample data</button>`}
+          ${isEmpty ? "" : `<button class="sd-btn" data-nav="analytics">Open analytics</button>`}
           <button class="sd-btn primary" data-nav="send">${icon("send")} Send email</button>
         </div>
-      </div>
+      </div>`;
 
-      ${isEmpty ? `
+    const heroHtml = `
       <div class="sd-hero">
         <div class="sd-hero-copy">
           <span class="sd-hero-badge">${icon("spark")} Welcome to Senditto</span>
@@ -264,121 +281,232 @@ client.emails.send(
           <div class="sd-hero-row">${icon("users")}<div><b>Campaigns</b><span>Newsletters and product updates with tracking.</span></div></div>
           <div class="sd-hero-row">${icon("hook")}<div><b>Webhooks</b><span>Delivery, opens, clicks and bounces to your app.</span></div></div>
         </div>
-      </div>` : ""}
+      </div>`;
 
+    // Actionable insights — only for workspaces with data, max two, each with a fix.
+    const insights = [];
+    const pendingDomains = m.domains - m.verifiedDomains;
+    const bounceRate = m.sent ? (m.bounced / m.sent) * 100 : 0;
+    if (!isEmpty && bounceRate > 4 && m.sent >= 20) {
+      insights.push({
+        tone: "bad",
+        icon: "alert",
+        text: `Bounce rate is <b>${bounceRate.toFixed(1)}%</b> — above the 4% healthy line. Clean your lists and review blocked addresses.`,
+        action: ["suppressions", "Review suppressions"],
+      });
+    }
+    if (!isEmpty && pendingDomains > 0) {
+      insights.push({
+        tone: "warn",
+        icon: "globe",
+        text: `<b>${pendingDomains} sending domain${pendingDomains === 1 ? "" : "s"}</b> still waiting for DNS verification — mail from ${pendingDomains === 1 ? "it" : "them"} can't go out yet.`,
+        action: ["domains", "Finish verification"],
+      });
+    }
+    const insightsHtml = insights
+      .slice(0, 2)
+      .map(
+        (i) => `
+        <div class="sd-insight ${i.tone}">
+          ${icon(i.icon)}
+          <p>${i.text}</p>
+          <button class="sd-btn sm" data-nav="${i.action[0]}">${esc(i.action[1])} ${icon("arrow")}</button>
+        </div>`
+      )
+      .join("");
+
+    const kpis = [
+      { label: "Emails sent", value: fmtCompact(m.sent), spark: totals, tone: "blue", sub: deltaTxt, up: deltaUp },
+      { label: "Delivery rate", value: m.deliveryRate, spark: delivered, tone: "green", sub: `${fmtCompact(m.delivered)} delivered` },
+      { label: "Open rate", value: m.openRate, spark: opened, tone: "blue", sub: `${fmtCompact(m.opened)} opened` },
+      { label: "Click rate", value: m.clickRate, spark: clicked, tone: "blue", sub: `${fmtCompact(m.clicked)} clicked` },
+      { label: "Bounced", value: fmtCompact(m.bounced), spark: bounced, tone: "red", cls: m.bounced ? "bad" : "", sub: m.sent ? `${bounceRate.toFixed(1)}% of sent` : "—" },
+    ];
+    const kpisHtml = `
       <div class="sd-kpis">
-        ${kpis.map((k) => `
-          <div class="sd-kpi ${k.tone || ""}">
+        ${kpis
+          .map(
+            (k) => `
+          <div class="sd-kpi ${k.cls || ""}">
             <div class="sd-kpi-top">
               <span>${esc(k.label)}</span>
               ${k.up === true ? '<b class="sd-delta up">▲</b>' : k.up === false ? '<b class="sd-delta down">▼</b>' : ""}
             </div>
             <div class="sd-kpi-value">${esc(String(k.value))}</div>
-            ${sparkline(k.spark)}
+            ${sparkline(k.spark, k.tone)}
             <div class="sd-kpi-sub">${esc(k.sub)}</div>
-          </div>`).join("")}
-      </div>
+          </div>`
+          )
+          .join("")}
+      </div>`;
 
-      <div class="sd-grid">
-        <div class="sd-col-main">
-          <section class="sd-card">
-            <div class="sd-card-head">
-              <div><h3>Email activity</h3><p>Sent vs delivered vs failed, per day</p></div>
-              <div class="sd-range">
-                ${[7, 14, 30].map((r) => `<button class="sd-range-btn ${range === r ? "active" : ""}" data-range="${r}">${r}d</button>`).join("")}
-              </div>
-            </div>
-            ${m.sent === 0
-              ? `<div class="sd-empty">${icon("send")}<h4>No activity yet</h4><p>Send your first email and this chart comes alive.</p></div>`
-              : areaChart([
-                  { name: "Sent", color: "#367ef5", values: totals },
-                  { name: "Delivered", color: "#16a34a", values: delivered },
-                  { name: "Failed", color: "#dc2626", values: failed },
-                ], days)}
-            <div class="sd-legend">
-              <span><i style="background:#367ef5"></i>Sent</span>
-              <span><i style="background:#16a34a"></i>Delivered</span>
-              <span><i style="background:#dc2626"></i>Failed</span>
-            </div>
-          </section>
+    // Stream mix for the chart footer
+    const streamCounts = {};
+    for (const msg of messages) {
+      const st = msg.stream || "Other";
+      streamCounts[st] = (streamCounts[st] || 0) + 1;
+    }
+    const streamMix = Object.entries(streamCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, n]) => `<span class="sd-mix"><b>${esc(name)}</b> ${m.sent ? Math.round((n / m.sent) * 100) : 0}%</span>`)
+      .join("");
 
-          <section class="sd-card">
-            <div class="sd-card-head">
-              <div><h3>Recent messages</h3><p>The last ${recent.length || 0} requests through your workspace</p></div>
-              <button class="sd-btn sm" data-nav="activity">View all ${icon("arrow")}</button>
-            </div>
-            ${recent.length === 0
-              ? `<div class="sd-empty sm"><p>Messages appear here the moment you send.</p></div>`
-              : `<table class="sd-table">
-                  <thead><tr><th>Message</th><th>To</th><th>Stream</th><th>Status</th><th>When</th></tr></thead>
-                  <tbody>
-                    ${recent.map((msg) => `
-                      <tr>
-                        <td class="sd-strong">${esc(msg.subject || msg.name || "—")}</td>
-                        <td class="sd-mut">${esc(Array.isArray(msg.to) ? msg.to[0] || "—" : msg.to || "—")}</td>
-                        <td><span class="sd-stream">${esc(msg.stream || "—")}</span></td>
-                        <td>${statusChip(msg.status)}</td>
-                        <td class="sd-mut">${esc(s.formatRelative?.(msg.createdAt) || "")}</td>
-                      </tr>`).join("")}
-                  </tbody>
-                </table>`}
-          </section>
+    const chartCard = `
+      <section class="sd-card">
+        <div class="sd-card-head">
+          <div><h3>Email activity</h3><p>Sent vs delivered vs failed, per day</p></div>
+          <div class="sd-range">
+            ${[7, 14, 30].map((r) => `<button class="sd-range-btn ${range === r ? "active" : ""}" data-range="${r}">${r}d</button>`).join("")}
+          </div>
         </div>
-
-        <div class="sd-col-side">
-          <section class="sd-card">
-            <div class="sd-card-head">
-              <div><h3>Get set up</h3><p>${doneCount}/${setup.length} complete</p></div>
-            </div>
-            <div class="sd-progress"><i style="width:${(doneCount / setup.length) * 100}%"></i></div>
-            <div class="sd-checklist">
-              ${setup.map((x) => `
-                <button class="sd-check ${x.done ? "done" : ""}" data-nav="${x.route}">
-                  <span class="sd-check-mark">${x.done ? icon("check") : ""}</span>
-                  <span class="sd-check-ic">${icon(x.icon)}</span>
-                  <span>${esc(x.label)}</span>
-                  ${icon("arrow")}
-                </button>`).join("")}
-            </div>
-          </section>
-
-          <section class="sd-card sd-code-card">
-            <div class="sd-card-head">
-              <div><h3>Send with the API</h3><p>Drop-in from any stack</p></div>
-            </div>
-            <div class="sd-code-tabs">
-              ${["curl", "node", "python"].map((t) => `<button class="sd-code-tab ${codeTab === t ? "active" : ""}" data-codetab="${t}">${t === "curl" ? "cURL" : t === "node" ? "Node.js" : "Python"}</button>`).join("")}
-              <button class="sd-code-copy" data-act="copy-code" title="Copy">${icon("copy")}</button>
-            </div>
-            <pre class="sd-code" data-code></pre>
-          </section>
-
-          <section class="sd-card">
-            <div class="sd-card-head"><div><h3>Workspace</h3><p>Quick status</p></div></div>
-            <div class="sd-facts">
-              <button class="sd-fact" data-nav="domains"><span>Domains</span><b>${m.verifiedDomains}/${m.domains} verified</b></button>
-              <button class="sd-fact" data-nav="api"><span>API keys</span><b>${m.activeKeys} active</b></button>
-              <button class="sd-fact" data-nav="contacts"><span>Contacts</span><b>${m.contacts}</b></button>
-              <button class="sd-fact" data-nav="suppressions"><span>Suppressions</span><b>${s.list("suppressions").length}</b></button>
-              <button class="sd-fact" data-nav="templates"><span>Templates</span><b>${m.templates}</b></button>
-              <button class="sd-fact" data-nav="webhooks"><span>Webhooks</span><b>${m.webhooks}</b></button>
-            </div>
-            <button class="sd-btn ghost full" data-nav="help">${icon("book")} Documentation & guides</button>
-          </section>
+        ${m.sent === 0
+          ? `<div class="sd-empty">${icon("wave")}<h4>Your delivery graph lives here</h4><p>Send the first email and watch sent, delivered and failed counts arrive per day.</p></div>`
+          : areaChart(
+              [
+                { name: "Sent", color: "#367ef5", values: totals },
+                { name: "Delivered", color: "#16a34a", values: delivered },
+                { name: "Failed", color: "#dc2626", values: failed },
+              ],
+              days
+            )}
+        <div class="sd-chart-foot">
+          <div class="sd-legend">
+            <span><i style="background:#367ef5"></i>Sent</span>
+            <span><i style="background:#16a34a"></i>Delivered</span>
+            <span><i style="background:#dc2626"></i>Failed</span>
+          </div>
+          ${m.sent ? `<div class="sd-mixes">${streamMix}</div>` : ""}
         </div>
-      </div>
-    </div>`;
+      </section>`;
 
-    // ----- wiring -----
+    const recent = messages.slice(0, 8);
+    const recentCard = `
+      <section class="sd-card">
+        <div class="sd-card-head">
+          <div><h3>Recent messages</h3><p>The last ${recent.length} requests through your workspace</p></div>
+          <button class="sd-btn sm" data-nav="activity">View all ${icon("arrow")}</button>
+        </div>
+        <div class="sd-table-wrap">
+          <table class="sd-table">
+            <thead><tr><th>Message</th><th>To</th><th>Stream</th><th>Status</th><th>When</th></tr></thead>
+            <tbody>
+              ${recent
+                .map(
+                  (msg) => `
+                <tr data-nav="activity" role="link" tabindex="0">
+                  <td class="sd-strong">${esc(msg.subject || msg.name || "—")}</td>
+                  <td class="sd-mut">${esc(Array.isArray(msg.to) ? msg.to[0] || "—" : msg.to || "—")}</td>
+                  <td><span class="sd-stream">${esc(msg.stream || "—")}</span></td>
+                  <td>${statusChip(msg.status)}</td>
+                  <td class="sd-mut">${esc(s.formatRelative?.(msg.createdAt) || "")}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>`;
+
+    const checklistCard = `
+      <section class="sd-card">
+        <div class="sd-card-head">
+          <div><h3>Get set up</h3><p>${doneCount}/${setup.length} complete</p></div>
+        </div>
+        <div class="sd-progress"><i style="width:${(doneCount / setup.length) * 100}%"></i></div>
+        <div class="sd-checklist">
+          ${setup
+            .map(
+              (x) => `
+            <button class="sd-check ${x.done ? "done" : ""}" data-nav="${x.route}">
+              <span class="sd-check-mark">${x.done ? icon("check") : ""}</span>
+              <span class="sd-check-ic">${icon(x.icon)}</span>
+              <span>${esc(x.label)}</span>
+              ${icon("arrow")}
+            </button>`
+            )
+            .join("")}
+        </div>
+      </section>`;
+
+    const codeCard = `
+      <section class="sd-card sd-code-card">
+        <div class="sd-card-head">
+          <div><h3>Send with the API</h3><p>Drop-in from any stack</p></div>
+        </div>
+        <div class="sd-code-tabs">
+          ${["curl", "node", "python"].map((t) => `<button class="sd-code-tab ${codeTab === t ? "active" : ""}" data-codetab="${t}">${t === "curl" ? "cURL" : t === "node" ? "Node.js" : "Python"}</button>`).join("")}
+          <button class="sd-code-copy" data-act="copy-code" title="Copy">${icon("copy")}</button>
+        </div>
+        <pre class="sd-code" data-code></pre>
+        <button class="sd-btn ghost full" data-nav="help">${icon("book")} Documentation & guides</button>
+      </section>`;
+
+    // Monthly usage vs plan quota
+    const cap = s.snapshot?.()?.capacity || {};
+    const quota = Number(cap.monthlyQuota) || 0;
+    const monthKey = new Date().toISOString().slice(0, 7);
+    const sentThisMonth = messages.filter((msg) => (msg.createdAt || "").slice(0, 7) === monthKey).length;
+    const usagePct = quota ? Math.min(100, (sentThisMonth / quota) * 100) : 0;
+    const usageHtml = quota
+      ? `
+        <div class="sd-usage">
+          <div class="sd-usage-top"><span>Monthly usage</span><b>${fmtCompact(sentThisMonth)} / ${fmtCompact(quota)}</b></div>
+          <div class="sd-progress slim"><i style="width:${Math.max(usagePct, sentThisMonth ? 1.5 : 0)}%"></i></div>
+        </div>`
+      : "";
+
+    const workspaceCard = `
+      <section class="sd-card">
+        <div class="sd-card-head"><div><h3>Workspace</h3><p>Quick status</p></div></div>
+        ${usageHtml}
+        <div class="sd-facts">
+          <button class="sd-fact" data-nav="domains"><span>Domains</span><b>${m.verifiedDomains}/${m.domains} verified</b></button>
+          <button class="sd-fact" data-nav="api"><span>API keys</span><b>${m.activeKeys} active</b></button>
+          <button class="sd-fact" data-nav="contacts"><span>Contacts</span><b>${fmtCompact(m.contacts)}</b></button>
+          <button class="sd-fact" data-nav="suppressions"><span>Suppressions</span><b>${fmtCompact(s.list("suppressions").length)}</b></button>
+          <button class="sd-fact" data-nav="templates"><span>Templates</span><b>${m.templates}</b></button>
+          <button class="sd-fact" data-nav="webhooks"><span>Webhooks</span><b>${m.webhooks}</b></button>
+        </div>
+        <div class="sd-status-line"><i></i> Sending infrastructure operational</div>
+      </section>`;
+
+    /* ----- assemble ----- */
+
+    root.innerHTML = isEmpty
+      ? `
+      <div class="sd-page">
+        ${headHtml}
+        ${heroHtml}
+        <div class="sd-grid">
+          <div class="sd-col-main">${chartCard}</div>
+          <div class="sd-col-side">${checklistCard}${codeCard}</div>
+        </div>
+      </div>`
+      : `
+      <div class="sd-page">
+        ${headHtml}
+        ${insightsHtml}
+        ${kpisHtml}
+        <div class="sd-grid">
+          <div class="sd-col-main">${chartCard}${recentCard}</div>
+          <div class="sd-col-side">${checklistCard}${codeCard}${workspaceCard}</div>
+        </div>
+      </div>`;
+
+    /* ----- wiring ----- */
+
     const codeEl = root.querySelector("[data-code]");
-    const setCode = () => { if (codeEl) codeEl.textContent = samples[codeTab]; };
+    const setCode = () => {
+      if (codeEl) codeEl.textContent = samples[codeTab];
+    };
     setCode();
 
     root.querySelectorAll("[data-nav]").forEach((el) =>
       el.addEventListener("click", () => window.SendittoNavigate?.(el.dataset.nav))
     );
     root.querySelectorAll("[data-range]").forEach((el) =>
-      el.addEventListener("click", () => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
         range = Number(el.dataset.range) || 14;
         render(root);
       })
@@ -396,12 +524,8 @@ client.emails.send(
       btn.classList.add("copied");
       setTimeout(() => btn.classList.remove("copied"), 900);
     });
-    root.querySelector('[data-act="seed-demo"]')?.addEventListener("click", () => {
-      window.SendittoDemo?.seed();
-    });
-    root.querySelector('[data-act="clear-demo"]')?.addEventListener("click", () => {
-      window.SendittoDemo?.clear();
-    });
+    root.querySelector('[data-act="seed-demo"]')?.addEventListener("click", () => window.SendittoDemo?.seed());
+    root.querySelector('[data-act="clear-demo"]')?.addEventListener("click", () => window.SendittoDemo?.clear());
   }
 
   window.SendittoUI = window.SendittoUI || {};
