@@ -1,0 +1,234 @@
+/* ============================================================
+   Senditto unified theme — loaded LAST.
+   One light design system across every page generation:
+   pp- (pages/pro/enterprise/settings/activity), tpl- (templates,
+   campaigns), wm- (workspaces), se- (send), an- (analytics),
+   sd-/cr- (overview + CRM, already on-system).
+   Calm light surfaces, one blue, one button, one table, one card.
+   ============================================================ */
+
+/* ---------------- shared scopes ---------------- */
+/* :is() carries ID specificity so these later rules win without !important */
+
+/* ---------------- buttons ---------------- */
+
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn) {
+  height: 40px;
+  border: 1px solid var(--sd-line, #e3e9f2);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--sd-ink, #0f172a);
+  font-weight: 700;
+  font-size: 13px;
+  box-shadow: none;
+  transition: box-shadow 0.16s ease, transform 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):hover {
+  border-color: #c9d6ea;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
+  background: #fff;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):active {
+  transform: translateY(0);
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):is(.primary, .danger-solid) {
+  background: linear-gradient(180deg, #4a8bf7, #367ef5);
+  border-color: #1e5fd6;
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(54, 126, 245, 0.26);
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):is(.primary):hover {
+  background: linear-gradient(180deg, #5895f8, #2f74ea);
+  border-color: #1e5fd6;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):is(.small, .sm) {
+  height: 33px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  padding: 0 11px;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):is(.danger, .destructive) {
+  color: #b32020;
+  border-color: #f0c9c9;
+  background: #fff;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .cr-modal)
+  :is(.pp-btn, .tpl-btn, .wm-btn, .se-btn):is(.danger, .destructive):hover {
+  background: rgba(220, 38, 38, 0.05);
+  border-color: #e4a9a9;
+}
+
+/* ---------------- inputs & selects ---------------- */
+
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-input, .tpl-input, .tpl-textarea, .wm-input, .wm-select, .se-input, .an-select, textarea.pp-input) {
+  background: #fff;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  color: var(--sd-ink, #0f172a);
+  font-weight: 600;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal, .cr-modal)
+  :is(.pp-input, .tpl-input, .tpl-textarea, .wm-input, .wm-select, .se-input, .an-select):focus {
+  border-color: #9dbdf5;
+  box-shadow: 0 0 0 3px rgba(54, 126, 245, 0.12);
+  outline: none;
+  background: #fff;
+}
+:is(#senditto-platform-root, .pp-modal, .tpl-modal, .wm-modal, .se-modal)
+  :is(.pp-label-text, .tpl-label-text, .wm-label-text) {
+  color: #47566d;
+  font-weight: 700;
+  font-size: 12.5px;
+}
+
+/* ---------------- cards & panels ---------------- */
+
+#senditto-platform-root :is(.pp-card, .tpl-card, .an-card, .wm-card, .pro-card) {
+  background: #fff;
+  border: 1px solid var(--sd-line, #e3e9f2);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+/* stat tiles under page heads follow the KPI card look */
+#senditto-platform-root .pp-stats > * {
+  background: #fff;
+  border: 1px solid var(--sd-line, #e3e9f2);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+/* ---------------- page headers ---------------- */
+
+#senditto-platform-root
+  :is(.pp-head, .se-head, .tpl-head, .wm-head, .an-head, .sup-head, .st-head) h1 {
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--sd-ink, #0f172a);
+}
+#senditto-platform-root
+  :is(.pp-head, .se-head, .tpl-head, .wm-head, .an-head, .sup-head, .st-head) > div > p {
+  color: var(--sd-mut, #5b6b82);
+}
+#senditto-platform-root :is(.pp-kicker, .se-kicker, .tpl-kicker, .wm-kicker, .an-kicker) {
+  color: #1e5fd6;
+  letter-spacing: 0.12em;
+  font-weight: 800;
+}
+
+/* ---------------- tables & list rows ---------------- */
+
+#senditto-platform-root :is(.pp-table-head, .pro-table-head, thead th) {
+  color: #8b99ad;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+#senditto-platform-root :is(.pp-row, .pro-table-row) {
+  border-color: #eef2f8;
+  transition: background 0.13s ease;
+}
+#senditto-platform-root :is(.pp-row, .pro-table-row):hover {
+  background: #f7faff;
+}
+
+/* ---------------- badges / status chips ---------------- */
+
+#senditto-platform-root :is(.pp-badge, .tpl-badge, .wm-badge) {
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* ---------------- modals ---------------- */
+
+:is(.pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal) {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+}
+:is(.pp-backdrop, .tpl-backdrop, .wm-backdrop, .se-backdrop) {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(3px);
+}
+:is(.pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal) > :is(section, .pp-modal-card, div[class*="modal-card"]) {
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+  border: 1px solid #eef2f8;
+}
+
+/* ---------------- code blocks → light ---------------- */
+
+#senditto-platform-root .pp-code,
+.pp-modal .pp-code {
+  background: #f8fafd;
+  color: #33415a;
+  border: 1px solid #e7edf6;
+  border-radius: 12px;
+  text-shadow: none;
+}
+#senditto-platform-root .se-code-workspace textarea,
+.se-modal .se-code-workspace textarea {
+  background: #f8fafd;
+  color: #33415a;
+  border: 1px solid #e7edf6;
+  caret-color: #1e5fd6;
+}
+
+/* ---------------- settings / enterprise nav rails ---------------- */
+
+#senditto-platform-root :is(.st-nav, .ent-settings-nav) button {
+  border-radius: 10px;
+  color: var(--sd-mut, #5b6b82);
+  font-weight: 700;
+}
+#senditto-platform-root :is(.st-nav, .ent-settings-nav) button:hover {
+  background: #f3f6fb;
+  color: var(--sd-ink, #0f172a);
+}
+#senditto-platform-root :is(.st-nav, .ent-settings-nav) button.active {
+  background: rgba(54, 126, 245, 0.09);
+  color: #1e5fd6;
+}
+
+/* ---------------- misc harmonization ---------------- */
+
+/* one accent for links & pro checkmarks */
+#senditto-platform-root .pro-check { color: #147c3d; }
+
+/* soften any leftover strong primary fills to the brand gradient */
+#senditto-platform-root :is(.tpl-btn, .wm-btn, .se-btn, .pp-btn)[class*="primary"] svg {
+  color: #fff;
+}
+
+/* toast: keep readable but light */
+.se-toast {
+  background: #ffffff;
+  color: var(--sd-ink, #0f172a);
+  border: 1px solid var(--sd-line, #e3e9f2);
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.18);
+}
+.se-toast svg { color: #147c3d; }
+
+/* focus visibility everywhere */
+#senditto-platform-root :is(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid rgba(54, 126, 245, 0.55);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* content background stays calm */
+#senditto-platform-root {
+  background: #f6f8fc;
+}

@@ -72,6 +72,17 @@
   function inject() {
     const nav = document.querySelector(".dashboard-sidebar nav");
     if (!nav) return;
+
+    // Single nav owner: block the legacy pro/enterprise injectors (they check
+    // these flags) and remove any duplicate groups they already added.
+    nav.dataset.proNav = "1";
+    nav.dataset.entNav = "1";
+    nav.querySelectorAll("[data-pro-nav], [data-ent-nav]").forEach((btn) => {
+      const group = btn.closest(".nav-group");
+      if (group) group.remove();
+      else btn.remove();
+    });
+
     if (nav.querySelector(`[${MARK}]`)) return; // already present
 
     const activeRoute =
