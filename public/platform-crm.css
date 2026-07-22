@@ -357,3 +357,16 @@
 .act-tl-step.fail i { background: #dc2626; border-color: #dc2626; }
 .act-tl-step.fail span { color: #b32020; }
 .act-tl-bar { flex: 1 1 auto; height: 2px; background: #e6ecf5; border-radius: 2px; }
+
+/* ---------- Analytics stage detail (an2-) ---------- */
+.an2-card { overflow: hidden; padding: 0; width: min(430px, 100%); }
+.an2-hero { position: relative; padding: 26px 24px 22px; color: #fff; }
+.an2-hero small { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .12em; opacity: .85; }
+.an2-hero h3 { margin: 4px 0 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+.an2-ico { position: absolute; right: 56px; top: 22px; font-size: 30px; opacity: .9; }
+.an2-x { position: absolute; right: 14px; top: 14px; background: rgba(255,255,255,.18); color: #fff; border: 0; }
+.an2-x:hover { background: rgba(255,255,255,.3); color: #fff; }
+.an2-card .cr-modal-body { padding: 20px 22px 22px; }
+.an2-nums { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.an2-nums b { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.an2-nums span { color: var(--sd-mut, #5b6b82); font-size: 13px; font-weight: 600; }
