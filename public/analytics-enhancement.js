@@ -234,7 +234,13 @@ ${
     host.querySelectorAll("[data-detail]").forEach((b) => {
       b.onclick = () => details(b.dataset.detail.split("|"));
     });
-    host.querySelector('[data-action="export"]')?.addEventListener("click", exportCsv);
+    host.querySelector('[data-action="export"]')?.addEventListener("click", (e) => {
+      exportCsv();
+      const b = e.currentTarget;
+      const orig = b.innerHTML;
+      b.innerHTML = `${icon("check")} Exported`;
+      setTimeout(() => (b.innerHTML = orig), 1200);
+    });
     host.querySelector('[data-action="all-campaigns"]')?.addEventListener("click", allCampaigns);
     host.querySelector('[data-action="refresh"]')?.addEventListener("click", (e) => {
       const button = e.currentTarget;

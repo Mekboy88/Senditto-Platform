@@ -223,12 +223,15 @@
       </section>
     </div>`;
     root.querySelectorAll("[data-lvl]").forEach((b) => b.addEventListener("click", () => { auditLevel = b.dataset.lvl; renderAudit(root); }));
-    root.querySelector('[data-act="export"]')?.addEventListener("click", () => {
+    root.querySelector('[data-act="export"]')?.addEventListener("click", (e) => {
       const a = document.createElement("a");
       a.href = URL.createObjectURL(new Blob([JSON.stringify(all, null, 2)], { type: "application/json" }));
       a.download = "senditto-audit.json";
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      const b = e.currentTarget;
+      b.innerHTML = `${svg("check")} Exported`;
+      setTimeout(() => (b.innerHTML = `${svg("download")} Export JSON`), 1200);
     });
   }
 
@@ -303,6 +306,17 @@
       }
     });
   }
+
+  // Composer CTA block: give it a real behavior
+  document.addEventListener("click", (e) => {
+    const cta = e.target.closest(".se-block-button");
+    if (!cta) return;
+    e.preventDefault();
+    window.SendittoAlert?.(
+      "This is your email's call-to-action button.\n\nIts color and corner style come from your Brand kit (Templates → Brand kit). The button text and destination link are set per message in Advanced message settings, or by your template.",
+      "Call-to-action button"
+    );
+  });
 
   const obs = new MutationObserver(() => {
     clearTimeout(obs._t);

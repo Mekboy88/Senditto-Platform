@@ -280,7 +280,11 @@
         const id = btn.closest("tr").dataset.id;
         const c = s.list("contacts").find((x) => x.id === id);
         if (!c) return;
-        if (btn.dataset.row === "copy") navigator.clipboard?.writeText(c.email || "");
+        if (btn.dataset.row === "copy") {
+          navigator.clipboard?.writeText(c.email || "");
+          btn.innerHTML = icon("check");
+          setTimeout(() => (btn.innerHTML = icon("copy")), 900);
+        }
         if (btn.dataset.row === "del") {
           s.remove("contacts", id);
           cState.selected.delete(id);
@@ -295,7 +299,12 @@
       const modal = openModal("Add contact", contactForm());
       wireContactForm(modal);
     });
-    root.querySelector('[data-act="export"]')?.addEventListener("click", () => exportContacts(s.list("contacts")));
+    root.querySelector('[data-act="export"]')?.addEventListener("click", (e) => {
+      exportContacts(s.list("contacts"));
+      const b = e.currentTarget;
+      b.innerHTML = `${icon("check")} Exported`;
+      setTimeout(() => (b.innerHTML = `${icon("download")} Export`), 1200);
+    });
     root.querySelector('[data-act="export-selected"]')?.addEventListener("click", () =>
       exportContacts(s.list("contacts").filter((c) => cState.selected.has(c.id)))
     );
@@ -771,9 +780,12 @@
         renderLogs(root);
       })
     );
-    root.querySelector('[data-act="export"]')?.addEventListener("click", () =>
-      download("senditto-logs.json", JSON.stringify(s.list("logs"), null, 2), "application/json")
-    );
+    root.querySelector('[data-act="export"]')?.addEventListener("click", (e) => {
+      download("senditto-logs.json", JSON.stringify(s.list("logs"), null, 2), "application/json");
+      const b = e.currentTarget;
+      b.innerHTML = `${icon("check")} Exported`;
+      setTimeout(() => (b.innerHTML = `${icon("download")} Export JSON`), 1200);
+    });
     root.querySelector('[data-act="clear"]')?.addEventListener("click", () => s.replaceAll("logs", []));
   }
 
