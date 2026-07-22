@@ -1089,10 +1089,12 @@ POST /v1/otp/verify
       toast("Export downloaded");
     });
     panel.querySelector("[data-clear-local]")?.addEventListener("click", () => {
-      if (!confirm("Clear ALL local Senditto platform data?")) return;
-      S().resetAll();
-      toast("Local data cleared");
-      settingsPage();
+      (window.SendittoConfirm ? window.SendittoConfirm({ title: "Clear all platform data", message: "Clear ALL local Senditto platform data? Every record stored in this browser is removed.", danger: true, confirmLabel: "Clear everything" }) : Promise.resolve(false)).then((ok) => {
+        if (!ok) return;
+        S().resetAll();
+        toast("Local data cleared");
+        settingsPage();
+      });
     });
   }
 

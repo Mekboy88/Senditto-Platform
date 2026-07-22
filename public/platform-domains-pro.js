@@ -139,11 +139,11 @@
           }, 1100);
         }
         if (b.dataset.dm === "remove") {
-          const sure = window.confirm(`Remove ${nameOf(d)}?\n\nMail from this domain will stop authenticating immediately. DNS records at your provider are not touched.`);
-          if (sure) {
+          window.SendittoConfirm({ title: "Remove domain", message: `Remove ${nameOf(d)}?\n\nMail from this domain stops authenticating immediately. DNS records at your provider are not touched.`, danger: true, confirmLabel: "Remove domain" }).then((sure) => {
+            if (!sure) return;
             s.remove("domains", id);
             s.logEvent?.("warn", "domains.remove", `Domain ${nameOf(d)} removed`, {});
-          }
+          });
         }
       })
     );

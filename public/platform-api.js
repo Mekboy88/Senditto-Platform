@@ -248,7 +248,7 @@
           }, 50);
         } catch (err) {
           console.error("[SendittoAPI] login failed", err);
-          alert(err.message || "Login failed");
+          (window.SendittoAlert || console.log)(err.message || "Login failed");
         }
       },
       true
@@ -346,7 +346,7 @@
             .then(() => true)
             .catch((e) => {
               console.error("[SendittoAPI] workspace delete", e);
-              alert(e.message || "Could not delete workspace");
+              (window.SendittoAlert || console.log)(e.message || "Could not delete workspace");
               return false;
             });
         }

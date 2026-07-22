@@ -26,7 +26,6 @@
 
   const SCOPES = ["email:send", "email:batch", "email:read", "domains:read", "domains:write", "suppressions:read", "suppressions:write", "analytics:read"];
   let addOpen = false;
-  let onceSecret = null; // {name, secret} — exists only in memory until dialog closes
 
   const rand = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
   const maskOf = (secret) => `${secret.slice(0, 12)}••••${secret.slice(-4)}`;
@@ -102,7 +101,6 @@
 
     wire(root);
     if (addOpen) openCreate(root);
-    if (onceSecret) openSecret(root);
   }
 
   function closeMenus() { document.querySelectorAll(".ak-menu").forEach((m) => m.remove()); }
@@ -128,30 +126,30 @@
         menu.className = "ak-menu";
         menu.dataset.for = tr.dataset.id;
         menu.innerHTML = `
-          ${revoked ? "" : `<button data-m="rotate">${svg("refresh")} Rotate key…</button>
-          <button data-m="revoke" class="danger">${svg("ban")} Revoke key…</button>`}
-          ${revoked ? `<button data-m="remove" class="danger">${svg("trash")} Remove from list…</button>` : ""}`;
+          ${revoked ? "" : `<button data-m="rotate">${svg("refresh")} Rotate key…</button>`}
+          <button data-m="delete" class="danger">${svg("trash")} Delete key…</button>`;
         const r = btn.getBoundingClientRect();
         menu.style.top = `${r.bottom + 6}px`;
         menu.style.left = `${Math.max(8, r.right - 190)}px`;
         document.body.appendChild(menu);
         menu.querySelectorAll("[data-m]").forEach((mi) =>
-          mi.addEventListener("click", () => {
+          mi.addEventListener("click", async () => {
             closeMenus();
-            if (mi.dataset.m === "revoke" && window.confirm(`Revoke “${k.name}”?\n\nRequests using this key stop working immediately. This cannot be undone — create or rotate to get a new key.`)) {
-              s.update("keys", k.id, { status: "revoked" });
-              s.logEvent?.("warn", "keys.revoke", `API key “${k.name}” revoked`, {});
-            }
-            if (mi.dataset.m === "remove" && window.confirm(`Remove the revoked key “${k.name}” from the list?`)) {
+            if (mi.dataset.m === "delete") {
+              const ok = await window.SendittoConfirm({ title: "Delete API key", message: `Permanently delete “${k.name}”?\n\nRequests using this key stop working immediately. This cannot be undone.`, danger: true, confirmLabel: "Delete permanently" });
+              if (!ok) return;
               s.remove("keys", k.id);
+              s.logEvent?.("warn", "keys.delete", `API key “${k.name}” permanently deleted`, {});
             }
-            if (mi.dataset.m === "rotate" && window.confirm(`Rotate “${k.name}”?\n\nA new secret is generated and shown once. The old secret is revoked immediately.`)) {
+            if (mi.dataset.m === "rotate") {
+              const ok = await window.SendittoConfirm({ title: "Rotate API key", message: `Rotate “${k.name}”?\n\nA new secret is generated and shown once. The old key is deleted and stops working immediately.`, confirmLabel: "Rotate key" });
+              if (!ok) return;
               const env = /test/i.test(k.environment || "") ? "test" : "live";
               const secret = `sk_${env}_${rand(20)}`;
-              s.update("keys", k.id, { status: "revoked", name: `${k.name} (rotated out)` });
+              s.remove("keys", k.id);
               s.add("keys", { name: k.name, environment: k.environment || "Live", key_prefix: `sk_${env}_`, masked: maskOf(secret), scopes: k.scopes || ["email:send"], status: "active", lastUsed: null });
-              s.logEvent?.("warn", "keys.rotate", `API key “${k.name}” rotated — old secret revoked`, {});
-              onceSecret = { name: k.name, secret };
+              s.logEvent?.("warn", "keys.rotate", `API key “${k.name}” rotated — old key deleted`, {});
+              showSecret(k.name, secret);
             }
           })
         );
@@ -198,15 +196,14 @@
       s.add("keys", { name, environment: env === "test" ? "Test" : "Live", key_prefix: `sk_${env}_`, masked: maskOf(secret), scopes: scopes.length ? scopes : ["email:send"], status: "active", lastUsed: null });
       s.logEvent?.("success", "keys.create", `API key “${name}” created (secret shown once)`, {});
       addOpen = false;
-      onceSecret = { name, secret };
       el.remove();
+      showSecret(name, secret);
       window.SendittoRender?.();
     });
     document.body.appendChild(el);
   }
 
-  function openSecret(root) {
-    const { name, secret } = onceSecret;
+  function showSecret(name, secret) {
     const el = document.createElement("div");
     el.className = "pp-modal cr-modal";
     el.innerHTML = `
@@ -225,7 +222,6 @@
       e.currentTarget.innerHTML = `${svg("check")} Copied`;
     });
     el.querySelector("[data-done]").addEventListener("click", () => {
-      onceSecret = null;
       el.remove();
       window.SendittoRender?.();
     });

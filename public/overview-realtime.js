@@ -172,7 +172,7 @@
       b.onclick = () => {
         const msg = messages.find((m) => m.id === b.dataset.ovMsg);
         if (!msg) return;
-        alert(
+        (window.SendittoAlert || console.log)(
           [
             msg.subject || "Untitled",
             `To: ${(msg.to || []).join(", ")}`,
