@@ -92,10 +92,63 @@
     return "M0 180 L650 180";
   }
 
+  /** Real per-period series for the active metric/range/stream. */
+  function chartData(messages) {
+    const W = 650;
+    const H = 220;
+    const padT = 14;
+    const padB = 16;
+    const match =
+      state.metric === "Opened"
+        ? /opened|clicked/i
+        : state.metric === "Clicked"
+          ? /clicked/i
+          : /delivered|opened|clicked/i;
+
+    const now = new Date();
+    const buckets = [];
+    if (state.range === "This year") {
+      for (let m = 0; m <= now.getMonth(); m++) {
+        buckets.push({ key: `${now.getFullYear()}-${String(m + 1).padStart(2, "0")}`, label: new Date(now.getFullYear(), m, 1).toLocaleDateString(undefined, { month: "short" }), n: 0, mode: "month" });
+      }
+    } else {
+      const days = state.range === "Last 7 days" ? 7 : state.range === "Last 90 days" ? 90 : 30;
+      for (let i = days - 1; i >= 0; i--) {
+        const d2 = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        buckets.push({ key: d2.toISOString().slice(0, 10), label: d2.toLocaleDateString(undefined, { day: "numeric", month: "short" }), n: 0, mode: "day" });
+      }
+    }
+    const idx = Object.fromEntries(buckets.map((b, i) => [b.key, i]));
+    for (const m of messages) {
+      if (!match.test(m.status || "")) continue;
+      const key = buckets[0].mode === "month" ? (m.createdAt || "").slice(0, 7) : (m.createdAt || "").slice(0, 10);
+      if (idx[key] != null) buckets[idx[key]].n += 1;
+    }
+
+    const max = Math.max(1, ...buckets.map((b) => b.n));
+    const step = buckets.length > 1 ? W / (buckets.length - 1) : W;
+    const pts = buckets.map((b, i) => [i * step, padT + (H - padT - padB) * (1 - b.n / max)]);
+    const cl = (y) => Math.max(padT, Math.min(H - padB, y));
+    let line = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[Math.max(0, i - 1)];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+      line += ` C${(p1[0] + (p2[0] - p0[0]) / 6).toFixed(1)} ${cl(p1[1] + (p2[1] - p0[1]) / 6).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) / 6).toFixed(1)} ${cl(p2[1] - (p3[1] - p1[1]) / 6).toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+    }
+    const labels = ["", "", "", "", "", "", ""];
+    labels[0] = buckets[0] ? buckets[0].label : "";
+    labels[3] = buckets[Math.floor((buckets.length - 1) / 2)] ? buckets[Math.floor((buckets.length - 1) / 2)].label : "";
+    labels[6] = buckets[buckets.length - 1] ? buckets[buckets.length - 1].label : "";
+    return { line, labels };
+  }
+
   function render() {
     const host = document.getElementById("senditto-platform-root");
     if (!host) return;
     const d = dataset();
+    const chart = chartData(d.messages);
     const hasData = d.sent > 0;
     state.updated = hasData
       ? `Updated at ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
@@ -109,7 +162,7 @@ ${
   hasData
     ? `<div class="an-main"><section class="an-card an-chart"><header><div><h2>${state.metric} over time</h2><p>${state.range} · ${state.stream}</p></div><nav>${["Delivered", "Opened", "Clicked"]
         .map((x) => `<button data-metric="${x}" class="${state.metric === x ? "active" : ""}">${x}</button>`)
-        .join("")}</nav></header><div class="an-summary"><b>${number(state.metric === "Delivered" ? d.delivered : state.metric === "Opened" ? d.opened : d.clicked)}</b><span>${icon("trend")} From your workspace activity</span></div><div class="an-line"><i></i><i></i><i></i><i></i><svg viewBox="0 0 650 220" preserveAspectRatio="none"><defs><linearGradient id="anArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#347cf4" stop-opacity=".25"/><stop offset="1" stop-color="#347cf4" stop-opacity="0"/></linearGradient></defs><path class="area" d="${emptyChartPath()} L650 220 L0 220Z"/><path class="stroke" d="${emptyChartPath()}"/></svg><footer>${["Start", "", "", "", "", "", "Now"]
+        .join("")}</nav></header><div class="an-summary"><b>${number(state.metric === "Delivered" ? d.delivered : state.metric === "Opened" ? d.opened : d.clicked)}</b><span>${icon("trend")} From your workspace activity</span></div><div class="an-line"><i></i><i></i><i></i><i></i><svg viewBox="0 0 650 220" preserveAspectRatio="none"><defs><linearGradient id="anArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#347cf4" stop-opacity=".25"/><stop offset="1" stop-color="#347cf4" stop-opacity="0"/></linearGradient></defs><path class="area" d="${chart.line} L650 220 L0 220Z"/><path class="stroke" d="${chart.line}"/></svg><footer>${chart.labels
         .map((x) => `<span>${x}</span>`)
         .join("")}</footer></div></section><section class="an-card an-funnel"><header><div><h2>Delivery funnel</h2><p>From accepted to clicked</p></div>${icon("chart")}</header>${[
         ["Accepted", number(d.sent), "100%"],

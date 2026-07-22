@@ -232,3 +232,36 @@
 #senditto-platform-root {
   background: #f6f8fc;
 }
+
+/* ---------------- floating sample-data control ---------------- */
+
+#senditto-demo-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 20px;
+  z-index: 65;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--sd-line, #e3e9f2);
+  background: #ffffff;
+  color: var(--sd-ink, #0f172a);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+#senditto-demo-fab svg { width: 15px; height: 15px; color: #b48b0e; }
+#senditto-demo-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.16);
+  border-color: #c9d6ea;
+}
+#senditto-demo-fab.seeded svg { color: #b32020; }
+@media (max-width: 760px) {
+  #senditto-demo-fab span { display: none; }
+  #senditto-demo-fab { padding: 11px; }
+}

@@ -158,6 +158,35 @@
       row({ name: "Feature announcement", status: "Processing", total: 1200, delivered: 435, failed: 3, stream: "Marketing" }),
     ]);
 
+    // SMTP credentials / IP pools / team invites / OTPs
+    s.replaceAll("smtpCredentials", [
+      ...keep("smtpCredentials"),
+      row({ name: "Backend relay", username: "acme-prod", host: "smtp.senditto.com", port: 587, status: "Active", lastUsed: isoAgo(rand, 1) }),
+      row({ name: "Legacy CRM", username: "acme-crm", host: "smtp.senditto.com", port: 465, status: "Paused", lastUsed: isoAgo(rand, 9) }),
+    ]);
+    s.replaceAll("ipPools", [
+      ...keep("ipPools"),
+      row({ name: "Shared pool", type: "shared", ips: 4, reputation: "Good", status: "Active", warmup: false }),
+      row({ name: "Marketing dedicated", type: "dedicated", ips: 2, reputation: "Building", status: "Warming up", warmup: true }),
+    ]);
+    s.replaceAll("teamInvites", [
+      ...keep("teamInvites"),
+      row({ email: "dev@acme.dev", role: "Developer", status: "Accepted", invitedBy: "founder@acme.dev" }),
+      row({ email: "marketing@acme.dev", role: "Marketer", status: "Pending", invitedBy: "founder@acme.dev" }),
+    ]);
+    const otps = keep("otps");
+    for (let i = 0; i < 6; i++) {
+      otps.push(
+        row({
+          email: pick(rand, contacts).email,
+          purpose: pick(rand, ["sign-in", "2fa", "email-verify"]),
+          status: weighted(rand, [["Verified", 70], ["Expired", 18], ["Pending", 12]]),
+          attempts: 1 + Math.floor(rand() * 2),
+        })
+      );
+    }
+    s.replaceAll("otps", otps);
+
     // Suppressions
     s.replaceAll("suppressions", [
       ...keep("suppressions"),
@@ -226,7 +255,7 @@
     const names = [
       "contacts", "segments", "inbound", "domains", "keys", "webhooks", "automations",
       "templates", "campaigns", "messages", "logs", "suppressions", "senders",
-      "smtpCredentials", "batches", "ipPools", "integrations", "teamInvites",
+      "smtpCredentials", "batches", "ipPools", "integrations", "teamInvites", "otps",
     ];
     for (const name of names) {
       const rows = s.list(name);
@@ -236,4 +265,49 @@
   }
 
   window.SendittoDemo = { seed, clear, isSeeded };
+
+  /* ---------- floating "Sample data" control — visible on every page ---------- */
+
+  const FAB_ID = "senditto-demo-fab";
+
+  function syncFab() {
+    const inDash = !!document.querySelector(".dashboard-shell");
+    let fab = document.getElementById(FAB_ID);
+    if (!inDash) {
+      fab?.remove();
+      return;
+    }
+    if (!fab) {
+      fab = document.createElement("button");
+      fab.id = FAB_ID;
+      fab.type = "button";
+      fab.addEventListener("click", () => {
+        if (isSeeded()) clear();
+        else seed();
+        syncFab();
+        window.SendittoRender?.();
+      });
+      document.body.appendChild(fab);
+    }
+    const seeded = isSeeded();
+    fab.classList.toggle("seeded", seeded);
+    fab.innerHTML = seeded
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7"/></svg><span>Remove sample data</span>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 1.4 4.1L18 9l-4.6 1.9L12 15l-1.4-4.1L6 9l4.6-1.9ZM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8Z"/></svg><span>Load sample data</span>`;
+  }
+
+  let fabTimer = null;
+  const fabObserver = new MutationObserver(() => {
+    clearTimeout(fabTimer);
+    fabTimer = setTimeout(syncFab, 120);
+  });
+
+  function startFab() {
+    fabObserver.observe(document.getElementById("root") || document.body, { subtree: true, childList: true });
+    syncFab();
+    window.addEventListener("senditto:store", () => setTimeout(syncFab, 50));
+  }
+
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", startFab);
+  else startFab();
 })();
