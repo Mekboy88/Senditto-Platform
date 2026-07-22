@@ -35,6 +35,7 @@
         zap: '<path d="M13 2 4 14h6l-1 8 9-12h-6Z"/>',
         copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
         chevron: '<path d="m9 6 6 6-6 6"/>',
+        check: '<path d="m20 6-11 11-5-5"/>',
         users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/>',
         terminal: '<path d="m4 17 6-5-6-5M12 19h8"/>',
       }[n] || ""
