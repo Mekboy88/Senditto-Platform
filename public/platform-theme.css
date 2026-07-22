@@ -330,3 +330,8 @@
 }
 .sd-pop-signout svg { width: 15px; height: 15px; }
 .sd-pop-signout:hover { background: rgba(220, 38, 38, 0.07); }
+
+/* Analytics: clear gaps between stacked cards */
+#senditto-platform-root .an-page { display: flex; flex-direction: column; gap: 16px; }
+#senditto-platform-root .an-page > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+#senditto-platform-root .an-main { gap: 16px; }
