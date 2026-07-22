@@ -345,3 +345,15 @@
 .ak-menu button.danger { color: #b32020; } .ak-menu button.danger svg { color: #b32020; }
 .ak-secret { display: flex; align-items: center; gap: 10px; background: #f8fafd; border: 1px solid #e7edf6; border-radius: 12px; padding: 12px 14px; }
 .ak-secret code { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; color: #0f172a; word-break: break-all; }
+
+/* ---------- Activity detail timeline (act-) ---------- */
+.act-tl { display: flex; align-items: center; gap: 6px; }
+.act-tl-step { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 62px; }
+.act-tl-step i { width: 26px; height: 26px; border-radius: 50%; border: 1.8px solid #cdd8e8; display: inline-flex; align-items: center; justify-content: center; background: #fff; }
+.act-tl-step i svg { width: 13px; height: 13px; color: #fff; }
+.act-tl-step span { font-size: 11px; font-weight: 700; color: #8b99ad; }
+.act-tl-step.done i { background: #16a34a; border-color: #16a34a; }
+.act-tl-step.done span { color: #147c3d; }
+.act-tl-step.fail i { background: #dc2626; border-color: #dc2626; }
+.act-tl-step.fail span { color: #b32020; }
+.act-tl-bar { flex: 1 1 auto; height: 2px; background: #e6ecf5; border-radius: 2px; }
