@@ -176,6 +176,8 @@
 
   // ========== OTP / VERIFICATION ==========
   function otpPage() {
+    const v2 = window.SendittoUI && window.SendittoUI["otp"];
+    if (v2 && v2 !== otpPage) { const r = document.getElementById("senditto-platform-root"); if (r) return v2(r); }
     const h = host();
     if (!h) return;
     const otps = S().list("otps");
@@ -910,6 +912,8 @@ POST /v1/otp/verify
 
   // ========== AUDIT ==========
   function auditPage() {
+    const v2 = window.SendittoUI && window.SendittoUI["audit"];
+    if (v2 && v2 !== auditPage) { const r = document.getElementById("senditto-platform-root"); if (r) return v2(r); }
     const h = host();
     if (!h) return;
     const logs = S().list("logs");

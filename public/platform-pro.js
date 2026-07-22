@@ -533,6 +533,8 @@
 
   // ---------- SUPPRESSIONS ----------
   function suppressionsPage() {
+    const v2 = window.SendittoUI && window.SendittoUI["suppressions"];
+    if (v2 && v2 !== suppressionsPage) { const r = document.getElementById("senditto-platform-root"); if (r) return v2(r); }
     const h = host();
     if (!h) return;
     const list = store().list("suppressions");

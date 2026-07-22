@@ -265,3 +265,68 @@
   #senditto-demo-fab span { display: none; }
   #senditto-demo-fab { padding: 11px; }
 }
+
+/* ---------------- shell upgrade: sections, collapse, popovers ---------------- */
+
+/* per-section accent colors (light, calm) */
+.dashboard-sidebar .nav-group:nth-of-type(1) button.active { background: rgba(54,126,245,.10); color: #1e5fd6; }
+.dashboard-sidebar .nav-group:nth-of-type(2) button.active { background: rgba(124,92,245,.10); color: #6d4fd8; }
+.dashboard-sidebar .nav-group:nth-of-type(3) button.active { background: rgba(13,148,136,.10); color: #0f766e; }
+.dashboard-sidebar .nav-group:nth-of-type(4) button.active { background: rgba(180,139,14,.12); color: #92610c; }
+.dashboard-sidebar .nav-group:nth-of-type(5) button.active { background: rgba(225,29,72,.09); color: #be123c; }
+.dashboard-sidebar .nav-group:nth-of-type(6) button.active { background: rgba(14,165,233,.10); color: #0369a1; }
+.dashboard-sidebar .nav-group:nth-of-type(7) button.active { background: rgba(99,102,241,.10); color: #4f46e5; }
+.dashboard-sidebar .nav-group:nth-of-type(8) button.active { background: rgba(100,116,139,.12); color: #334155; }
+.dashboard-sidebar .nav-group:nth-of-type(1) > small { color: #1e5fd6; }
+.dashboard-sidebar .nav-group:nth-of-type(2) > small { color: #6d4fd8; }
+.dashboard-sidebar .nav-group:nth-of-type(3) > small { color: #0f766e; }
+.dashboard-sidebar .nav-group:nth-of-type(4) > small { color: #92610c; }
+.dashboard-sidebar .nav-group:nth-of-type(5) > small { color: #be123c; }
+.dashboard-sidebar .nav-group:nth-of-type(6) > small { color: #0369a1; }
+.dashboard-sidebar .nav-group:nth-of-type(7) > small { color: #4f46e5; }
+.dashboard-sidebar .nav-group:nth-of-type(8) > small { color: #334155; }
+.dashboard-sidebar .nav-group > small { font-weight: 800; letter-spacing: .09em; }
+
+/* hidden sidebar sign out (moved to profile dropdown) */
+.sd-hidden-signout { display: none !important; }
+
+/* sidebar usage widget */
+.sd-side-usage {
+  margin: 6px 10px 10px;
+  padding: 12px 13px;
+  border: 1px solid var(--sd-line, #e3e9f2);
+  border-radius: 13px;
+  background: #fbfcfe;
+}
+.sd-side-usage-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; }
+.sd-side-usage-top span { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #8b99ad; }
+.sd-side-usage-top b { font-size: 13px; font-variant-numeric: tabular-nums; }
+.sd-side-usage small { display: flex; align-items: center; gap: 5px; margin-top: 7px; color: #8b99ad; font-size: 10.5px; }
+.sd-ok-dot { width: 6px; height: 6px; border-radius: 50%; background: #16a34a; display: inline-block; box-shadow: 0 0 0 2.5px rgba(22,163,74,.15); }
+.dashboard-shell.collapsed .sd-side-usage { display: none; }
+
+/* collapsed sidebar: icon-only, labels and group titles hidden */
+.dashboard-shell.collapsed .dashboard-sidebar .nav-group > small { display: none; }
+.dashboard-shell.collapsed .dashboard-sidebar nav button span { display: none; }
+.dashboard-shell.collapsed .dashboard-sidebar nav button { justify-content: center; }
+.dashboard-shell.collapsed .sidebar-bottom button span { display: none; }
+/* collapse toggle reads as an arrow and flips */
+.sidebar-brand > button { transition: transform .25s ease; border-radius: 9px; }
+.sidebar-brand > button:hover { background: #f1f5fb; }
+.dashboard-shell.collapsed .sidebar-brand > button { transform: rotate(180deg); }
+
+/* proper popover shade (profile / notifications / help) */
+.profile-popover, .notification-popover, .top-popover, .search-popover, .docs-popover {
+  border: 1px solid #e6ecf5 !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06), 0 18px 48px rgba(15, 23, 42, 0.14) !important;
+  background: #ffffff !important;
+  overflow: hidden;
+}
+.sd-pop-signout {
+  display: flex; align-items: center; gap: 9px; width: calc(100% - 16px); margin: 6px 8px 8px;
+  border: 0; background: transparent; border-radius: 9px; padding: 9px 10px;
+  font-size: 13px; font-weight: 700; color: #b32020; cursor: pointer; text-align: left;
+}
+.sd-pop-signout svg { width: 15px; height: 15px; }
+.sd-pop-signout:hover { background: rgba(220, 38, 38, 0.07); }
