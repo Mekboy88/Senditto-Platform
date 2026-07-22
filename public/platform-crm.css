@@ -310,3 +310,23 @@
   .cr-rule { grid-template-columns: 1fr 1fr; }
   .cr-rule input { grid-column: 1 / -2; }
 }
+
+/* ---------- Domains v2 (dm-) ---------- */
+.dm-list { display: flex; flex-direction: column; gap: 12px; }
+.dm-card { padding: 16px 18px; }
+.dm-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.dm-ident { display: flex; align-items: center; gap: 12px; min-width: 220px; flex: 1 1 220px; }
+.dm-ico { width: 38px; height: 38px; border-radius: 12px; background: rgba(54,126,245,.09); color: #1e5fd6; display: inline-flex; align-items: center; justify-content: center; }
+.dm-ico svg { width: 18px; height: 18px; }
+.dm-ident b { display: block; font-size: 14.5px; letter-spacing: -0.01em; }
+.dm-ident small { display: block; color: var(--sd-mut); font-size: 12px; margin-top: 1px; }
+.dm-auth { display: flex; gap: 5px; flex-wrap: wrap; }
+.dm-actions { display: flex; gap: 7px; margin-left: auto; flex-wrap: wrap; }
+.dm-dns { border-top: 1px solid #eef2f8; margin-top: 14px; padding-top: 14px; }
+.dm-recs { border: 1px solid #e9eef6; border-radius: 12px; overflow: hidden; }
+.dm-rec { display: grid; grid-template-columns: 64px 1.2fr 1.8fr auto 34px; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid #eef2f8; font-size: 12.5px; }
+.dm-rec:last-child { border-bottom: 0; }
+.dm-rec-head { background: #f8fafd; color: #8b99ad; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+.dm-rec code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: #33415a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dm-type { font-weight: 800; font-size: 11px; color: #1e5fd6; background: rgba(54,126,245,.09); border-radius: 6px; padding: 3px 8px; width: max-content; }
+@media (max-width: 900px) { .dm-rec { grid-template-columns: 56px 1fr auto; } .dm-rec code.dm-val, .dm-rec-head span:nth-child(3) { display: none; } }
