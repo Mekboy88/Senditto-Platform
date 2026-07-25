@@ -129,3 +129,22 @@
 @media (max-width: 900px) {
   .ap-decor { display: none; }
 }
+
+/* ---------- reset-password resend block ---------- */
+.ap-resend { margin-top: 6px; text-align: center; }
+.ap-resend-meta { color: #5b6b82; font-size: 13px; line-height: 1.6; margin: 0 0 14px; }
+.ap-resend-meta b { color: #0f172a; }
+.ap-resend-row { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.ap-resend-btn {
+  border: 1px solid #e3e9f2; background: #fff; color: #0f172a;
+  border-radius: 10px; padding: 10px 18px; font-size: 13.5px; font-weight: 700;
+  cursor: pointer; font-variant-numeric: tabular-nums;
+  transition: all 0.15s ease;
+}
+.ap-resend-btn:disabled { color: #8b99ad; cursor: default; background: #f6f8fc; }
+.ap-resend-btn:not(:disabled):hover { border-color: #9dbdf5; box-shadow: 0 0 0 3px rgba(54, 126, 245, 0.12); }
+.ap-again {
+  border: 0; background: transparent; color: #1e5fd6; font-size: 13px; font-weight: 700;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+.ap-resent { display: inline-block; margin-top: 12px; color: #147c3d; font-size: 13px; font-weight: 700; }
