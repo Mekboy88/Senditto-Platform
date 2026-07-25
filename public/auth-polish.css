@@ -1,0 +1,131 @@
+/* ============================================================
+   Auth right side — ambient enhancement (keeps original artwork)
+   ============================================================ */
+
+.auth-story { position: relative; overflow: hidden; isolation: isolate; }
+
+.ap-decor { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+
+/* soft ambient background */
+.ap-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+}
+.ap-blob-a {
+  width: 480px; height: 480px;
+  right: -120px; top: 4%;
+  background: radial-gradient(circle, rgba(54, 126, 245, 0.16), transparent 65%);
+  animation: apDrift 14s ease-in-out infinite alternate;
+}
+.ap-blob-b {
+  width: 420px; height: 420px;
+  left: -100px; bottom: -6%;
+  background: radial-gradient(circle, rgba(22, 163, 74, 0.13), transparent 65%);
+  animation: apDrift 17s 2s ease-in-out infinite alternate-reverse;
+}
+@keyframes apDrift {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(-34px, 26px) scale(1.08); }
+}
+
+/* faint dot grid, fading toward the form side */
+.ap-grid {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(720px 560px at 68% 52%, rgba(0, 0, 0, 0.8), transparent 75%);
+}
+
+/* the existing illustration + console card get gentle life */
+.auth-story.ap-enhanced .auth-visual {
+  position: relative; z-index: 1;
+  animation: apFloat 7s ease-in-out infinite;
+  filter: drop-shadow(0 26px 40px rgba(15, 23, 42, 0.10));
+}
+.auth-story.ap-enhanced .auth-mini-console {
+  animation: apFloat 7s 1.3s ease-in-out infinite;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12) !important;
+}
+@keyframes apFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+
+/* paper plane gliding across on a soft arc */
+.ap-plane {
+  position: absolute;
+  width: 30px; height: 30px;
+  left: 6%; top: 30%;
+  opacity: 0;
+  animation: apFly 11s 1s cubic-bezier(0.4, 0, 0.35, 1) infinite;
+}
+@keyframes apFly {
+  0%   { transform: translate(0, 0) rotate(8deg) scale(0.85); opacity: 0; }
+  6%   { opacity: 0.9; }
+  30%  { transform: translate(24vw, -9vh) rotate(-4deg) scale(1); opacity: 0.9; }
+  55%  { transform: translate(44vw, -6vh) rotate(10deg) scale(1); opacity: 0.85; }
+  78%  { transform: translate(58vw, -16vh) rotate(-6deg) scale(0.95); opacity: 0.6; }
+  92%  { opacity: 0; }
+  100% { transform: translate(66vw, -20vh) rotate(-6deg) scale(0.9); opacity: 0; }
+}
+
+/* floating status chips */
+.ap-chip {
+  position: absolute;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  border: 1px solid #e6ecf5;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #33415a;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.10);
+  opacity: 0;
+  animation: apIn 0.8s ease-out forwards, apBob 5.5s 1s ease-in-out infinite;
+}
+.ap-chip b { color: #0f172a; font-weight: 800; }
+.ap-chip i {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-style: normal; font-size: 10px;
+}
+.ap-chip i.ok { background: rgba(22, 163, 74, 0.14); }
+.ap-chip i.ok::before { content: "✓"; color: #147c3d; font-weight: 800; }
+.ap-chip i.eye { background: rgba(124, 92, 245, 0.14); }
+.ap-chip i.eye::before { content: "👀"; font-size: 9px; }
+.ap-chip i.lock { background: rgba(54, 126, 245, 0.13); }
+.ap-chip i.lock::before { content: "🔒"; font-size: 9px; }
+
+.ap-chip-1 { right: 10%; top: 24%; animation-delay: 0.5s, 1s; }
+.ap-chip-2 { left: 8%; top: 56%; animation-delay: 0.9s, 1.6s; }
+.ap-chip-3 { right: 16%; bottom: 14%; animation-delay: 1.3s, 2.1s; }
+
+@keyframes apIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes apBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+/* keep everything calm for reduced-motion users */
+@media (prefers-reduced-motion: reduce) {
+  .ap-blob, .ap-plane, .ap-chip,
+  .auth-story.ap-enhanced .auth-visual,
+  .auth-story.ap-enhanced .auth-mini-console { animation: none !important; }
+  .ap-chip { opacity: 1; }
+  .ap-plane { opacity: 0.5; }
+}
+
+/* small screens: hide decorative layer, keep the artwork */
+@media (max-width: 900px) {
+  .ap-decor { display: none; }
+}
