@@ -221,7 +221,6 @@
           form.querySelector('input[placeholder*="mail" i]');
         const passInput = form.querySelector('input[type="password"]');
         if (!emailInput || !passInput) return;
-        if (!apiBase()) return; // local-only mode if API not configured
 
         e.preventDefault();
         e.stopPropagation();
@@ -229,23 +228,8 @@
         const password = passInput.value;
         try {
           await login(email, password);
-          // After real login, click SPA continue path if still needed
-          const btn =
-            form.querySelector('button[type="submit"]') ||
-            document.querySelector('button:has-text("Sign in")') ||
-            null;
-          // Force SPA into dashboard by dispatching a custom event the router can use
+          // The control database accepted the account — nothing else grants entry.
           window.dispatchEvent(new CustomEvent("senditto:auth-success", { detail: loadSession() }));
-          // Best-effort: click Sign in securely after setting a flag the SPA may ignore —
-          // many previews just need any successful form; try Continue / Sign in buttons
-          setTimeout(() => {
-            const candidates = [...document.querySelectorAll("button")].filter((b) =>
-              /sign in securely|continue|sign in/i.test(b.textContent || "")
-            );
-            // If still on auth, the SPA may require its own local auth — store a bridge flag
-            sessionStorage.setItem("senditto_live_auth", "1");
-            candidates[0]?.click();
-          }, 50);
         } catch (err) {
           console.error("[SendittoAPI] login failed", err);
           (window.SendittoAlert || console.log)(err.message || "Login failed");
