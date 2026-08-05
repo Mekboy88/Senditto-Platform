@@ -6,7 +6,10 @@
     <meta name="theme-color" content="#f6f9ff" />
     <meta name="description" content="Senditto — one clean API for transactional email, marketing campaigns and inbound email." />
     <title>Senditto — Email infrastructure for every message</title>
-    <script type="module" crossorigin src="/assets/index-D6YpDDHo.js"></script>
+    <!-- Sign-in client. Loads before the app so the auth screen can verify
+         credentials against the control database. -->
+    <script src="/platform-auth.js?v=1"></script>
+    <script type="module" crossorigin src="/assets/index-D6YpDDHo.js?v=auth1"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-C_5Bj6g5.css">
     <link rel="stylesheet" href="/dashboard-layout-fix.css?v=setfix4">
     <link rel="stylesheet" href="/analytics-enhancement.css">
