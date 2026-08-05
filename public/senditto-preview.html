@@ -36,13 +36,14 @@
     <script src="/platform-store.js?v=s4"></script>
     <!-- Makes the store a live view of the control database. -->
     <script src="/platform-sync.js?v=1"></script>
-    <script src="/local-platform-config.js"></script>
-    <script src="/platform-api.js?v=rt1"></script>
+    <!-- platform-api.js is retired: platform-auth.js signs in and
+         platform-sync.js carries the data, both against the live database. -->
     <script src="/platform-router.js"></script>
     <script src="/platform-dialogs.js?v=1"></script>
     <script src="/auth-polish.js?v=1"></script>
     <script src="/platform-nav.js?v=1"></script>
-    <script src="/platform-demo.js?v=1"></script>
+    <!-- platform-demo.js is retired: seeding sample rows would now write
+         them into the real database. -->
     <script src="/topbar-menus-fix.js?v=setfix4"></script>
     <!-- Page modules register into window.SendittoUI -->
     <script src="/overview-realtime.js"></script>
