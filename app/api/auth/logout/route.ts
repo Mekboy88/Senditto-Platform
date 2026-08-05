@@ -1,5 +1,6 @@
 import {
   PROFILE_COOKIE,
+  UI_HINT_COOKIE,
   SESSION_COOKIE,
   clearedCookieHeader,
   controlApi,
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
   const headers = new Headers({ "Content-Type": "application/json", "Cache-Control": "no-store" });
   headers.append("Set-Cookie", clearedCookieHeader(SESSION_COOKIE, secure));
   headers.append("Set-Cookie", clearedCookieHeader(PROFILE_COOKIE, secure));
+  headers.append("Set-Cookie", clearedCookieHeader(UI_HINT_COOKIE, secure));
 
   return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
 }

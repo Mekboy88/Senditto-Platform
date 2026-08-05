@@ -99,7 +99,7 @@
   function detectRoute() {
     const label = activeSidebarLabel();
     if (label && ROUTE_BY_LABEL[label]) return ROUTE_BY_LABEL[label];
-    return currentRoute || "overview";
+    return currentRoute || lastRoute() || "overview";
   }
 
   function setSidebarActive(route) {
@@ -197,9 +197,30 @@
     renderTimer = setTimeout(() => renderRoute(route || detectRoute(), reason), 0);
   }
 
+  const ROUTE_KEY = "senditto_platform_route";
+
+  /** Remember where the operator was, so a refresh returns to that page. */
+  function rememberRoute(route) {
+    try {
+      if (route) localStorage.setItem(ROUTE_KEY, route);
+    } catch {
+      /* private mode */
+    }
+  }
+
+  function lastRoute() {
+    try {
+      const r = localStorage.getItem(ROUTE_KEY);
+      return r && LABEL_BY_ROUTE[r] ? r : null;
+    } catch {
+      return null;
+    }
+  }
+
   function navigate(route, { clickSidebar = true } = {}) {
     if (!route) return;
     currentRoute = route;
+    rememberRoute(route);
 
     // Prefer driving the SPA state so search/top menus stay consistent
     if (clickSidebar) {
@@ -232,6 +253,7 @@
       // Direct label match
       if (ROUTE_BY_LABEL[raw]) {
         currentRoute = ROUTE_BY_LABEL[raw];
+        rememberRoute(currentRoute);
         // Allow SPA to mark active, then paint our page
         scheduleRender(currentRoute, "click:" + raw);
         return;
@@ -241,6 +263,7 @@
       for (const [label, route] of Object.entries(ROUTE_BY_LABEL)) {
         if (raw === label || raw.endsWith(label) || raw.startsWith(label)) {
           currentRoute = route;
+          rememberRoute(route);
           scheduleRender(route, "click-partial:" + label);
           return;
         }
@@ -254,11 +277,72 @@
   window.SendittoRender = () => scheduleRender(currentRoute, "external");
 
   // Keep mount alive while dashboard is open
+  // Restoring the remembered page has to wait for the dashboard's own sidebar
+  // to exist — the button is what switches the app's internal page, and on a
+  // fresh load it is not there yet when boot() first runs.
+  let restored = false;
+  let restoreTimer = null;
+
+  function sidebarButtonFor(route) {
+    const label = LABEL_BY_ROUTE[route];
+    return [...document.querySelectorAll(".dashboard-sidebar nav button")].find((el) => {
+      const text = (el.querySelector("span")?.textContent || el.textContent || "").trim();
+      return ROUTE_BY_LABEL[text] === route || text === label;
+    });
+  }
+
+  /**
+   * Put the operator back on the page they were on. The dashboard hydrates in
+   * its own time, so keep looking for the sidebar button for a few seconds
+   * rather than assuming it is there the moment the shell appears.
+   */
+  function restoreRoute() {
+    if (restored) return;
+    const want = lastRoute();
+    if (!want || want === "overview") {
+      restored = true;
+      return;
+    }
+    clearInterval(restoreTimer);
+    const deadline = Date.now() + 12000;
+    let lastClick = 0;
+    const attempt = () => {
+      if (restored) return clearInterval(restoreTimer);
+      if (!document.querySelector(".dashboard-shell")) return;
+
+      // Done only when the dashboard itself says it is on that page. Clicking
+      // during hydration silently does nothing, so confirm rather than assume.
+      if (activeSidebarLabel() === LABEL_BY_ROUTE[want]) {
+        restored = true;
+        clearInterval(restoreTimer);
+        currentRoute = want;
+        scheduleRender(want, "restore");
+        return;
+      }
+
+      const btn = sidebarButtonFor(want);
+      if (btn && Date.now() - lastClick > 500) {
+        lastClick = Date.now();
+        btn.click();
+      }
+      if (Date.now() > deadline) {
+        restored = true;
+        clearInterval(restoreTimer);
+      }
+    };
+    attempt();
+    restoreTimer = setInterval(attempt, 200);
+  }
+
   const boot = () => {
     unmountIfNeeded();
-    if (!document.querySelector(".dashboard-shell")) return;
+    if (!document.querySelector(".dashboard-shell")) {
+      restored = false; // signed out: allow a fresh restore next time in
+      return;
+    }
     ensureMount();
     scheduleRender(detectRoute(), "boot");
+    restoreRoute();
   };
 
   const observer = new MutationObserver(() => {
@@ -270,6 +354,7 @@
       }
       const root = ensureMount();
       if (!root) return;
+      restoreRoute();
       // If React remounted shell and wiped our root, re-render
       if (!root.dataset.route || root.childElementCount === 0) {
         scheduleRender(detectRoute(), "remount");

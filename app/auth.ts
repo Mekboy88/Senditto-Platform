@@ -11,6 +11,11 @@ export const SESSION_COOKIE = "senditto_session";
 /** Display profile for the signed-in account. The session cookie remains the
  *  only thing that grants access; this is read for the UI greeting. */
 export const PROFILE_COOKIE = "senditto_profile";
+/** Readable by the page, on purpose: it lets the app render the dashboard on
+ *  first paint instead of flashing the marketing site while the session is
+ *  confirmed. It grants nothing — the HttpOnly session cookie is the only
+ *  thing the server trusts. */
+export const UI_HINT_COOKIE = "senditto_ui";
 
 /** Private control-database address. Server-side only. */
 export function controlApi(): string {
@@ -40,11 +45,17 @@ export function readCookie(req: Request, name: string): string | null {
 
 export const sessionToken = (req: Request) => readCookie(req, SESSION_COOKIE);
 
-export function cookieHeader(name: string, value: string, maxAgeSeconds: number, secure: boolean): string {
+export function cookieHeader(
+  name: string,
+  value: string,
+  maxAgeSeconds: number,
+  secure: boolean,
+  httpOnly = true
+): string {
   const bits = [
     `${name}=${encodeURIComponent(value)}`,
     "Path=/",
-    "HttpOnly",
+    ...(httpOnly ? ["HttpOnly"] : []),
     "SameSite=Lax",
     `Max-Age=${Math.max(0, Math.floor(maxAgeSeconds))}`,
   ];
@@ -53,7 +64,7 @@ export function cookieHeader(name: string, value: string, maxAgeSeconds: number,
 }
 
 export function clearedCookieHeader(name: string, secure: boolean): string {
-  return cookieHeader(name, "", 0, secure);
+  return cookieHeader(name, "", 0, secure, name !== UI_HINT_COOKIE);
 }
 
 /** https in production, plain http for local development. */

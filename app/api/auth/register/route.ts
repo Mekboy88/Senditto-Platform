@@ -1,6 +1,7 @@
 import {
   PROFILE_COOKIE,
   SESSION_COOKIE,
+  UI_HINT_COOKIE,
   cookieHeader,
   controlApi,
   isSecureRequest,
@@ -66,6 +67,7 @@ export async function POST(req: Request) {
   const headers = new Headers({ "Content-Type": "application/json", "Cache-Control": "no-store" });
   headers.append("Set-Cookie", cookieHeader(SESSION_COOKIE, data.token, maxAge, secure));
   headers.append("Set-Cookie", cookieHeader(PROFILE_COOKIE, profile, maxAge, secure));
+  headers.append("Set-Cookie", cookieHeader(UI_HINT_COOKIE, "1", maxAge, secure, false));
 
   return new Response(JSON.stringify({ ok: true, user: data.user ?? { email } }), {
     status: 201,

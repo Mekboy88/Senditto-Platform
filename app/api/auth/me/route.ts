@@ -1,5 +1,6 @@
 import {
   PROFILE_COOKIE,
+  UI_HINT_COOKIE,
   isSecureRequest,
   readCookie,
   clearedCookieHeader,
@@ -22,6 +23,7 @@ export async function GET(req: Request) {
     const headers = new Headers({ "Content-Type": "application/json", "Cache-Control": "no-store" });
     headers.append("Set-Cookie", clearedCookieHeader(SESSION_COOKIE, secure));
     headers.append("Set-Cookie", clearedCookieHeader(PROFILE_COOKIE, secure));
+  headers.append("Set-Cookie", clearedCookieHeader(UI_HINT_COOKIE, secure));
     return new Response(JSON.stringify({ authenticated: false }), { status: 401, headers });
   }
 

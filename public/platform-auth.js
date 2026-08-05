@@ -11,6 +11,25 @@
   let verified = false;
   let profile = null;
 
+  /**
+   * A readable hint the server sets beside the session cookie. It lets the app
+   * paint the dashboard immediately on a refresh instead of flashing the
+   * marketing site while the session is confirmed. It grants nothing: the
+   * HttpOnly session cookie is the only thing the server trusts, and if it
+   * turns out to be gone we clear the hint and return to signed-out.
+   */
+  const hasHint = () => /(?:^|;\s*)senditto_ui=1(?:;|$)/.test(document.cookie);
+
+  function clearHint() {
+    document.cookie = "senditto_ui=; Path=/; Max-Age=0; SameSite=Lax";
+  }
+
+  /** Read synchronously, before React renders, so the first paint is right. */
+  window.SendittoBoot = {
+    view: () => (hasHint() ? "dashboard" : null),
+    signedIn: hasHint,
+  };
+
   async function post(path, body) {
     const res = await fetch(path, {
       method: "POST",
@@ -45,16 +64,33 @@
       return profile;
     },
 
-    /** Restore a session left by a previous visit (cookie checked server-side). */
+    /**
+     * Restore a session left by a previous visit. The cookie is checked
+     * server-side, so a refresh keeps you signed in for as long as the session
+     * is genuinely alive — and only that long.
+     */
     async restore() {
       try {
         const res = await fetch("/api/auth/me", { credentials: "same-origin" });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          // The hint outlived the session: drop it and return to signed-out
+          // once, rather than leaving a dashboard that cannot load anything.
+          if (hasHint()) {
+            clearHint();
+            if (!sessionStorage.getItem("senditto_session_expired")) {
+              sessionStorage.setItem("senditto_session_expired", "1");
+              location.reload();
+            }
+          }
+          return null;
+        }
+        sessionStorage.removeItem("senditto_session_expired");
         const data = await res.json();
         verified = !!data.authenticated;
         profile = data.user || null;
         return verified ? profile : null;
       } catch {
+        // A network blip must not sign anyone out.
         return null;
       }
     },
