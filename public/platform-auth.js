@@ -36,6 +36,15 @@
       return profile;
     },
 
+    /** Create a real account, then sign straight in. */
+    async signUp({ email, password, name, company } = {}) {
+      const data = await post("/api/auth/register", { email, password, name, company });
+      verified = true;
+      profile = data.user || { email };
+      window.dispatchEvent(new CustomEvent("senditto:signed-in", { detail: profile }));
+      return profile;
+    },
+
     /** Restore a session left by a previous visit (cookie checked server-side). */
     async restore() {
       try {

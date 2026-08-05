@@ -42,6 +42,16 @@ const patches = [
     2,
   ],
   [
+    // Runs after the sign-in patch above, so it matches that patch's output.
+    "registration creates a real account in the database",
+    "catch(v=>l(v&&v.message||`Sign in failed`));return}s(!0)",
+    "catch(v=>l(v&&v.message||`Sign in failed`));return}" +
+      "if(e===`register`){window.SendittoAuth.signUp({email:n.get(`email`),password:n.get(`password`)," +
+      "name:n.get(`name`),company:n.get(`company`)}).then(()=>s(!0))" +
+      ".catch(v=>l(v&&v.message||`Could not create your account`));return}s(!0)",
+    1,
+  ],
+  [
     "entering the dashboard requires a verified session",
     "onContinue:()=>{p(null),h(`dashboard`)}",
     "onContinue:()=>{if(!(window.SendittoAuth&&window.SendittoAuth.isAuthenticated()))return;" +
