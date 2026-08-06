@@ -65,34 +65,48 @@
     },
 
     /**
-     * Restore a session left by a previous visit. The cookie is checked
-     * server-side, so a refresh keeps you signed in for as long as the session
-     * is genuinely alive — and only that long.
+     * Restore a session left by a previous visit.
+     *
+     * The only thing that signs anyone out here is the server positively
+     * saying the session is gone (401). A failed check — server restarting,
+     * network dropped, request timed out — leaves you signed in and retries.
+     * Anything else turns a one-second blip into "it logged me out again".
      */
-    async restore() {
-      try {
-        const res = await fetch("/api/auth/me", { credentials: "same-origin" });
-        if (!res.ok) {
-          // The hint outlived the session: drop it and return to signed-out
-          // once, rather than leaving a dashboard that cannot load anything.
-          if (hasHint()) {
-            clearHint();
-            if (!sessionStorage.getItem("senditto_session_expired")) {
-              sessionStorage.setItem("senditto_session_expired", "1");
-              location.reload();
-            }
-          }
+    async restore({ retries = 4 } = {}) {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        let res = null;
+        try {
+          res = await fetch("/api/auth/me", { credentials: "same-origin", cache: "no-store" });
+        } catch {
+          res = null; // unreachable — not a sign-out
+        }
+
+        if (res && res.ok) {
+          const data = await res.json().catch(() => ({}));
+          verified = !!data.authenticated;
+          profile = data.user || null;
+          sessionStorage.removeItem("senditto_session_expired");
+          return verified ? profile : null;
+        }
+
+        if (res && res.status === 401) {
+          // The server is certain: this session is over.
+          clearHint();
+          verified = false;
+          profile = null;
           return null;
         }
-        sessionStorage.removeItem("senditto_session_expired");
-        const data = await res.json();
-        verified = !!data.authenticated;
-        profile = data.user || null;
-        return verified ? profile : null;
-      } catch {
-        // A network blip must not sign anyone out.
-        return null;
+
+        // Could not verify. Keep the session and try again shortly.
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, Math.min(400 * 2 ** attempt, 4000)));
+        }
       }
+
+      // Still unverified. Stay signed in — the cookies are untouched, and any
+      // genuine problem will surface on the next real request.
+      console.warn("[Senditto] could not verify the session; staying signed in");
+      return profile;
     },
 
     async signOut() {

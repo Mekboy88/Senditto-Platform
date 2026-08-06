@@ -11,14 +11,13 @@ import {
 } from "../../../auth";
 
 /**
- * Report whether the caller holds a live session, and refresh the cookies
- * while doing it.
+ * Report whether the caller holds a live session, and slide the cookies
+ * forward while doing it.
  *
- * The refresh is the point: the database rolls a session forward whenever it
- * is used, so re-issuing the cookies with the new expiry means an account in
- * regular use stays signed in indefinitely. Without this the cookie would
- * quietly lapse on its original deadline and the next refresh would look like
- * an unexplained logout.
+ * The rule that matters: cookies are cleared ONLY when the database says the
+ * token is genuinely not a session. If the database could not be reached, the
+ * session is left exactly as it was and the caller is told so — anything else
+ * turns a momentary hiccup into a permanent logout.
  */
 export async function GET(req: Request) {
   const token = sessionToken(req);
@@ -26,7 +25,16 @@ export async function GET(req: Request) {
   const secure = isSecureRequest(req);
   const headers = new Headers({ "Content-Type": "application/json", "Cache-Control": "no-store" });
 
-  if (!check.valid) {
+  if (check.state === "unavailable") {
+    // Keep every cookie. The client keeps showing the app; real data calls
+    // will surface any genuine problem on their own.
+    return new Response(
+      JSON.stringify({ authenticated: null, reason: "verification_unavailable" }),
+      { status: 503, headers }
+    );
+  }
+
+  if (check.state === "invalid") {
     headers.append("Set-Cookie", clearedCookieHeader(SESSION_COOKIE, secure));
     headers.append("Set-Cookie", clearedCookieHeader(PROFILE_COOKIE, secure));
     headers.append("Set-Cookie", clearedCookieHeader(UI_HINT_COOKIE, secure));

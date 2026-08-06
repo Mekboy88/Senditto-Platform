@@ -87,23 +87,45 @@ export function json(body: unknown, status = 200, headers: Record<string, string
  * the returned expiry is the fresh one — the caller re-issues its cookies with
  * it, and an account in regular use is never signed out.
  */
-export type SessionCheck = { valid: boolean; expiresAt?: string; user?: unknown };
+/**
+ * Three outcomes, and the difference matters more than anything else here:
+ *
+ *   valid       — the database confirmed the session.
+ *   invalid     — the database said this token is not a session. Sign out.
+ *   unavailable — we could not ask. This is NOT a signed-out state: the
+ *                 session may be perfectly good. Treating it as signed out is
+ *                 what turns a one-second hiccup (a restart, a slow response)
+ *                 into a permanent logout, because the cookies get cleared.
+ */
+export type SessionState = "valid" | "invalid" | "unavailable";
+export type SessionCheck = { state: SessionState; expiresAt?: string; user?: unknown };
 
 export async function checkSession(token: string | null): Promise<SessionCheck> {
-  if (!token) return { valid: false };
-  try {
-    const res = await fetch(`${controlApi()}/api/auth/session`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) return { valid: false };
-    const data = (await res.json()) as { expiresAt?: string; user?: unknown };
-    return { valid: true, expiresAt: data.expiresAt, user: data.user };
-  } catch {
-    // A blip reaching the database must never sign anyone out.
-    return { valid: false };
+  if (!token) return { state: "invalid" };
+
+  // A single blip should not cost anyone their session, so try more than once
+  // before giving up — but never conclude "signed out" from a failure to ask.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(`${controlApi()}/api/auth/session`, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(4000),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { expiresAt?: string; user?: unknown };
+        return { state: "valid", expiresAt: data.expiresAt, user: data.user };
+      }
+      // Only the database saying "not a session" is a real sign-out.
+      if (res.status === 401 || res.status === 403) return { state: "invalid" };
+    } catch {
+      /* unreachable or timed out — fall through and retry */
+    }
+    if (attempt < 2) await new Promise((r) => setTimeout(r, 150 * (attempt + 1)));
   }
+  return { state: "unavailable" };
 }
 
+/** True only when the database positively confirmed the session. */
 export async function verifySession(token: string | null): Promise<boolean> {
-  return (await checkSession(token)).valid;
+  return (await checkSession(token)).state === "valid";
 }
