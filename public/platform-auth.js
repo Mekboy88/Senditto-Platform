@@ -24,10 +24,36 @@
     document.cookie = "senditto_ui=; Path=/; Max-Age=0; SameSite=Lax";
   }
 
-  /** Read synchronously, before React renders, so the first paint is right. */
+  const AUTH_KEY = "senditto_auth_screen";
+
+  /**
+   * Read synchronously, before React renders, so the first paint is already
+   * the right screen — the dashboard, or the sign-in / create-account panel
+   * you had open. Anything decided after the first frame is a visible flicker.
+   */
   window.SendittoBoot = {
     view: () => (hasHint() ? "dashboard" : null),
     signedIn: hasHint,
+
+    /** Which auth panel was open when the page was last unloaded. */
+    authMode() {
+      if (hasHint()) return null; // signed in: the dashboard wins
+      try {
+        const mode = sessionStorage.getItem(AUTH_KEY);
+        return mode === "signin" || mode === "register" || mode === "forgot" ? mode : null;
+      } catch {
+        return null;
+      }
+    },
+
+    rememberAuth(mode) {
+      try {
+        if (mode) sessionStorage.setItem(AUTH_KEY, mode);
+        else sessionStorage.removeItem(AUTH_KEY);
+      } catch {
+        /* private mode */
+      }
+    },
   };
 
   async function post(path, body) {

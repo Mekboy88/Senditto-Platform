@@ -72,6 +72,18 @@ const patches = [
   [
     // Leaving the dashboard must actually end the session, or the boot hint
     // would send the next refresh straight back in.
+    // The sign-in / create-account panel is app state, so a refresh threw it
+    // away and dropped you on the landing page. Remember which panel was open
+    // and reopen it on the first frame; every change is recorded, so closing
+    // it is remembered too.
+    "a refresh reopens the auth panel you had open",
+    "[f,p]=(0,S.useState)(null)",
+    "[f,p$0]=(0,S.useState)(()=>(window.SendittoBoot&&window.SendittoBoot.authMode())||null)," +
+      "p=v=>{window.SendittoBoot&&window.SendittoBoot.rememberAuth(v);p$0(v)}",
+    1,
+    "window.SendittoBoot.authMode()",
+  ],
+  [
     "leaving the dashboard signs out for real",
     "xt,{onExit:()=>h(`marketing`)}",
     "xt,{onExit:()=>{if(window.SendittoAuth){window.SendittoAuth.signOut();return}h(`marketing`)}}",
@@ -148,4 +160,35 @@ page = page.replace(/\/(platform-[\w-]+|auth-polish)\.(js|css)(\?v=[\w.]+)?/g, (
 if (page !== pageBefore) {
   writeFileSync(HTML, page);
   console.log("  stamped asset URLs with content hashes so caches cannot serve stale code");
+}
+
+/* ------------------------------------------------------------------
+   Inline the boot screen.
+
+   A skeleton that arrives as its own <script src> cannot paint until that
+   request completes — on a slow connection the user stares at a blank page
+   for exactly as long as the shimmer was meant to cover. Inlining it means it
+   is on screen in the first frame, with no round trip. The source of truth
+   stays public/platform-boot.js; this regenerates the inlined copy.
+   ------------------------------------------------------------------ */
+{
+  const bootPath = new URL("../public/platform-boot.js", import.meta.url).pathname;
+  const boot = readFileSync(bootPath, "utf8");
+  const html = readFileSync(HTML, "utf8");
+  const START = "<!-- boot:start -->";
+  const END = "<!-- boot:end -->";
+  const from = html.indexOf(START);
+  const to = html.indexOf(END);
+  if (from === -1 || to === -1) {
+    console.log("  boot markers not found — skipping inline boot screen");
+  } else {
+    const block =
+      `${START}\n    <!-- Generated from public/platform-boot.js — edit that file, not this. -->\n` +
+      `    <script>\n${boot}\n    </script>\n    ${END}`;
+    const next = html.slice(0, from) + block + html.slice(to + END.length);
+    if (next !== html) {
+      writeFileSync(HTML, next);
+      console.log("  inlined the boot screen so it paints in the first frame");
+    }
+  }
 }
