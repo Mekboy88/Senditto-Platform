@@ -341,7 +341,11 @@
       return;
     }
     ensureMount();
-    scheduleRender(detectRoute(), "boot");
+    // Paint the remembered page straight away. Rendering the default first and
+    // correcting afterwards is what made a refresh flash Overview before
+    // landing on the page you were actually on.
+    const want = (!restored && lastRoute()) || detectRoute();
+    scheduleRender(want, "boot");
     restoreRoute();
   };
 

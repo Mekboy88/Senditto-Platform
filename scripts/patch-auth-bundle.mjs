@@ -112,3 +112,40 @@ if (src !== before) {
 } else {
   console.log("\nBundle already up to date.");
 }
+
+/* ------------------------------------------------------------------
+   Cache busting.
+
+   The app bundle is patched in place, so its filename never changes and a
+   browser that cached the old copy keeps running it — which looks exactly
+   like being signed out, because an old bundle has none of the restore
+   logic. Stamp every locally-served script with a hash of its own contents
+   so any change is a new URL and no stale copy can survive.
+   ------------------------------------------------------------------ */
+import { createHash } from "node:crypto";
+
+const shortHash = (text) => createHash("sha256").update(text).digest("hex").slice(0, 10);
+
+let page = readFileSync(HTML, "utf8");
+const pageBefore = page;
+
+// The patched bundle.
+page = page.replace(
+  /(\/assets\/index-[\w-]+\.js)(\?v=[\w.]+)?/g,
+  (_m, path) => `${path}?v=${shortHash(readFileSync(file, "utf8"))}`
+);
+
+// Our own scripts and stylesheets in public/.
+page = page.replace(/\/(platform-[\w-]+|auth-polish)\.(js|css)(\?v=[\w.]+)?/g, (m, name, ext) => {
+  const assetPath = new URL(`../public/${name}.${ext}`, import.meta.url).pathname;
+  try {
+    return `/${name}.${ext}?v=${shortHash(readFileSync(assetPath, "utf8"))}`;
+  } catch {
+    return m; // file not in this repo — leave the reference alone
+  }
+});
+
+if (page !== pageBefore) {
+  writeFileSync(HTML, page);
+  console.log("  stamped asset URLs with content hashes so caches cannot serve stale code");
+}
