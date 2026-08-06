@@ -148,3 +148,34 @@
   cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
 }
 .ap-resent { display: inline-block; margin-top: 12px; color: #147c3d; font-size: 13px; font-weight: 700; }
+
+/* ============================================================
+   Autofilled fields: keep the focus ring, drop the blue block
+   ============================================================
+   Chrome paints its own background on a field it has autofilled. The input
+   itself is transparent here, so that paint shows through as a blue block
+   sitting inside the rounded field — next to the icon, not aligned with it.
+   `background-color` cannot override it; an inset shadow tall enough to cover
+   the field is the only thing that wins. The wrapper keeps its own border and
+   focus ring, so focus still reads exactly as before.
+   ------------------------------------------------------------ */
+.auth-form input:-webkit-autofill,
+.auth-form input:-webkit-autofill:hover,
+.auth-form input:-webkit-autofill:focus,
+.auth-form input:-webkit-autofill:active,
+.auth-form input:autofill {
+  -webkit-box-shadow: 0 0 0 60px #fff inset !important;
+  box-shadow: 0 0 0 60px #fff inset !important;
+  -webkit-text-fill-color: #0b1730 !important;
+  caret-color: #0b1730;
+  /* Chrome re-applies its colour after a repaint; an absurd delay parks it. */
+  transition: background-color 100000s ease-in-out 0s !important;
+}
+
+/* Firefox uses its own flag rather than the WebKit pseudo-class. */
+.auth-form input:-moz-autofill,
+.auth-form input:-moz-autofill-preview {
+  filter: none;
+  background-image: none;
+  background-color: transparent;
+}
