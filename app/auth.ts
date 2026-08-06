@@ -82,18 +82,28 @@ export function json(body: unknown, status = 200, headers: Record<string, string
 }
 
 /**
- * Ask the control database whether this session token is still valid.
- * The database is the only authority: an expired or revoked token fails here
- * no matter what the browser sends.
+ * Ask the control database whether this session token is still valid, and how
+ * long it is now good for. Reaching the database rolls the session forward, so
+ * the returned expiry is the fresh one — the caller re-issues its cookies with
+ * it, and an account in regular use is never signed out.
  */
-export async function verifySession(token: string | null): Promise<boolean> {
-  if (!token) return false;
+export type SessionCheck = { valid: boolean; expiresAt?: string; user?: unknown };
+
+export async function checkSession(token: string | null): Promise<SessionCheck> {
+  if (!token) return { valid: false };
   try {
-    const res = await fetch(`${controlApi()}/api/stats`, {
+    const res = await fetch(`${controlApi()}/api/auth/session`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.ok;
+    if (!res.ok) return { valid: false };
+    const data = (await res.json()) as { expiresAt?: string; user?: unknown };
+    return { valid: true, expiresAt: data.expiresAt, user: data.user };
   } catch {
-    return false;
+    // A blip reaching the database must never sign anyone out.
+    return { valid: false };
   }
+}
+
+export async function verifySession(token: string | null): Promise<boolean> {
+  return (await checkSession(token)).valid;
 }
