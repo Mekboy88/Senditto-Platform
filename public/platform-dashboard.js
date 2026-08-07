@@ -8,6 +8,17 @@
  * onboarding vs active) share the same visual system. Inline SVG only.
  */
 (() => {
+  /**
+   * The live indicator reports the actual state of the change stream, so it
+   * can never claim to be live while the connection is down. platform-sync
+   * updates it in place as the stream comes and goes.
+   */
+  function streamBadge() {
+    const state = (window.SendittoSync && window.SendittoSync.streamState()) || "connecting";
+    const label = state === "live" ? "Live" : state === "offline" ? "Reconnecting" : "Connecting";
+    return `<i></i>${label}`;
+  }
+
   const S = () => window.SendittoStore;
   const esc = (v) =>
     String(v ?? "")
