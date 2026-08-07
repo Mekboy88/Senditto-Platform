@@ -192,9 +192,39 @@
       .replaceAll('"', "&quot;");
   }
 
+  /**
+   * Rebuilding a page replaces its whole contents, so every redundant render
+   * is a visible flash. Boot alone used to fire several in a row — mount,
+   * hydrate, restore — which read as the page glitching two or three times.
+   *
+   * Two guards: collapse everything requested in the same short window into a
+   * single render, and skip that render entirely when neither the page nor the
+   * data behind it has changed since the last one.
+   */
+  const RENDER_DEBOUNCE = 60;
+  let storeTick = 0;
+  let lastRendered = { route: null, tick: -1 };
+
   function scheduleRender(route, reason) {
     clearTimeout(renderTimer);
-    renderTimer = setTimeout(() => renderRoute(route || detectRoute(), reason), 0);
+    renderTimer = setTimeout(() => {
+      const want = route || detectRoute();
+      const root = document.getElementById("senditto-platform-root");
+      // An empty container must always be filled, whatever the guards say —
+      // React can wipe it on a re-render, and skipping there means a blank page.
+      const empty = !root || root.childElementCount === 0;
+      const forced =
+        empty ||
+        reason === "force" ||
+        reason === "navigate" ||
+        reason === "restore" ||
+        reason === "remount";
+      if (!forced && lastRendered.route === want && lastRendered.tick === storeTick) {
+        return; // nothing to show that is not already on screen
+      }
+      lastRendered = { route: want, tick: storeTick };
+      renderRoute(want, reason);
+    }, RENDER_DEBOUNCE);
   }
 
   const ROUTE_KEY = "senditto_platform_route";
@@ -390,6 +420,8 @@
 
   // Re-render on store changes for live data (skip while a modal is open)
   window.addEventListener("senditto:store", () => {
+    // Data moved, so the next render has something new to show.
+    storeTick++;
     if (!document.getElementById("senditto-platform-root")) return;
     if (document.querySelector(".pp-modal, .tpl-modal, .wm-modal, .se-modal, .an-modal")) return;
     scheduleRender(currentRoute, "store");
