@@ -273,15 +273,36 @@
 
   let stream = null;
   let reloadTimer = null;
+  let streamState = "connecting";
+
+  /**
+   * The page shows a live indicator, so the indicator has to be told the truth
+   * rather than assuming the connection is up. The badge is updated in place —
+   * rebuilding the page for a status dot would be a visible flash.
+   */
+  function setStreamState(next) {
+    if (streamState === next) return;
+    streamState = next;
+    const label = next === "live" ? "Live" : next === "offline" ? "Reconnecting" : "Connecting";
+    document.querySelectorAll(".sd-live[data-stream]").forEach((el) => {
+      el.dataset.state = next;
+      el.innerHTML = `<i></i>${label}`;
+    });
+    window.dispatchEvent(new CustomEvent("senditto:stream", { detail: { state: next } }));
+  }
 
   function startStream() {
     if (stream) return;
+    setStreamState("connecting");
     try {
       stream = new EventSource("/api/platform/stream", { withCredentials: true });
     } catch {
+      setStreamState("offline");
       return;
     }
+    stream.onopen = () => setStreamState("live");
     stream.onmessage = (e) => {
+      setStreamState("live");
       let event;
       try {
         event = JSON.parse(e.data);
@@ -300,9 +321,12 @@
       }
     };
     stream.onerror = () => {
+      setStreamState("offline");
       stream?.close();
       stream = null;
-      setTimeout(startStream, 5000);
+      // Come back quickly: a live page that has stopped listening is worse
+      // than one that reconnects a little eagerly.
+      setTimeout(startStream, 3000);
     };
   }
 
@@ -323,7 +347,13 @@
     }
   }
 
-  window.SendittoSync = { start, reload: load, stop: stopStream, isReady: () => ready };
+  window.SendittoSync = {
+    start,
+    reload: load,
+    stop: stopStream,
+    isReady: () => ready,
+    streamState: () => streamState,
+  };
 
   window.addEventListener("senditto:signed-in", start);
   // Already signed in from a previous visit.

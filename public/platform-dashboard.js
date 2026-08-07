@@ -311,11 +311,6 @@ client.emails.send(
 
     const heroActions = `
       <div class="sd-hero-actions-row">
-        ${seeded
-          ? `<button class="sd-hbtn ghost" data-act="clear-demo">${icon("trash")} Remove sample data</button>`
-          : isEmpty
-            ? ""
-            : `<button class="sd-hbtn ghost" data-act="seed-demo">${icon("spark")} Sample data</button>`}
         ${isEmpty ? "" : `<button class="sd-hbtn ghost" data-nav="analytics">${icon("gauge")} Analytics</button>`}
         <button class="sd-hbtn solid" data-nav="send">${icon("send")} Send email</button>
       </div>`;
@@ -326,7 +321,7 @@ client.emails.send(
         <div class="sd-hero3-top">
           <div class="sd-hero3-meta">
             <span class="sd-date-chip">${esc(today)}</span>
-            <span class="sd-live"><i></i>Live</span>
+            <span class="sd-live" data-stream>${streamBadge()}</span>
           </div>
           ${heroActions}
         </div>
@@ -345,7 +340,6 @@ client.emails.send(
           <div class="sd-hero3-cta">
             <button class="sd-hbtn solid lg" data-nav="send">${icon("send")} Send a test email</button>
             <button class="sd-hbtn ghost lg" data-nav="api">${icon("key")} Create API key</button>
-            <button class="sd-hbtn ghost lg" data-act="seed-demo">${icon("spark")} Explore with sample data</button>
           </div>`
           : insights.length
             ? `<div class="sd-hero3-insights">
@@ -563,8 +557,6 @@ client.emails.send(
       e.currentTarget.classList.add("copied");
       setTimeout(() => root.querySelector('[data-act="copy-code"]')?.classList.remove("copied"), 900);
     });
-    root.querySelector('[data-act="seed-demo"]')?.addEventListener("click", () => window.SendittoDemo?.seed());
-    root.querySelector('[data-act="clear-demo"]')?.addEventListener("click", () => window.SendittoDemo?.clear());
 
     // Crosshair tooltip
     const wrap = root.querySelector("[data-chart]");
