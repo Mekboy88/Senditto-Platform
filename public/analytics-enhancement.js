@@ -41,6 +41,54 @@
 
   const number = (n) => Math.round(n).toLocaleString("en-GB");
 
+  /**
+   * The database computes these figures and scopes them to this account, so
+   * the product and the operator console always agree. They are cached here
+   * and refreshed whenever the underlying data changes.
+   *
+   * Engagement in particular has to come from the server: a delivered message
+   * that was opened still has status "delivered", so counting opens by reading
+   * status strings reports zero however many people opened the mail.
+   */
+  let figures = null;
+  let fetching = false;
+
+  const rangeDays = () =>
+    state.range === "Last 7 days" ? 7 : state.range === "Last 90 days" ? 90 : state.range === "This year" ? 365 : 30;
+  const streamParam = () =>
+    state.stream === "All streams" ? "all" : String(state.stream).toLowerCase();
+
+  async function loadFigures({ quiet = false } = {}) {
+    if (fetching) return figures;
+    fetching = true;
+    try {
+      const res = await fetch(
+        `/api/platform/analytics?days=${rangeDays()}&stream=${encodeURIComponent(streamParam())}`,
+        { credentials: "same-origin", cache: "no-store" }
+      );
+      if (res.ok) {
+        figures = await res.json();
+        state.updated = new Date().toLocaleTimeString();
+        if (!quiet) window.SendittoRender?.();
+      }
+    } catch {
+      /* keep the last good figures rather than blanking the page */
+    } finally {
+      fetching = false;
+    }
+    return figures;
+  }
+
+  // Refresh when anything the numbers depend on changes, and on a slow tick so
+  // a long-open page never drifts.
+  window.addEventListener("senditto:data", () => loadFigures({ quiet: true }));
+  setInterval(() => {
+    const root = document.getElementById("senditto-platform-root");
+    if (root && root.dataset.route === "analytics") loadFigures({ quiet: true });
+  }, 20000);
+
+
+
   function inRange(iso) {
     if (!iso) return true;
     const t = new Date(iso).getTime();
@@ -56,36 +104,39 @@
   }
 
   function dataset() {
-    let messages = store()
-      .list("messages")
-      .filter((m) => inRange(m.createdAt));
-    if (state.stream !== "All streams") {
-      messages = messages.filter((m) => (m.stream || "Transactional") === state.stream);
+    const f = figures;
+    if (!f) {
+      loadFigures();
+      return { sent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, rates: [0, 0, 0], messages: [], pending: true };
     }
-    const sent = messages.length;
-    const delivered = messages.filter((m) => /delivered|opened|clicked|queued/i.test(m.status || "")).length;
-    const opened = messages.filter((m) => /opened|clicked/i.test(m.status || "")).length;
-    const clicked = messages.filter((m) => /clicked/i.test(m.status || "")).length;
-    const bounced = messages.filter((m) => /bounce/i.test(m.status || "")).length;
-    const rates = [
-      sent ? delivered / sent : 0,
-      delivered || sent ? opened / (delivered || sent) : 0,
-      delivered || sent ? clicked / (delivered || sent) : 0,
-    ];
-    return { sent, delivered, opened, clicked, bounced, rates, messages };
+    const t = f.totals;
+    return {
+      sent: t.sent,
+      delivered: t.delivered,
+      opened: t.uniqueOpens,
+      clicked: t.uniqueClicks,
+      bounced: t.bounced,
+      failed: t.failed,
+      queued: t.queued,
+      // The page draws these as fractions.
+      rates: [f.rates.delivery / 100, f.rates.open / 100, f.rates.click / 100],
+      series: f.series,
+      byStream: f.byStream,
+      topDomains: f.topDomains,
+      failures: f.failures,
+      messages: [],
+    };
   }
 
   function campaigns() {
-    return store()
-      .list("campaigns")
-      .filter((c) => inRange(c.createdAt))
-      .map((c) => [
-        c.name,
-        "—",
-        "—",
-        "—",
-        c.status || "Draft",
-      ]);
+    const rows = (figures && figures.campaigns) || [];
+    return rows.map((c) => [
+      c.name,
+      number(c.sent),
+      c.sent ? `${c.deliveryRate}%` : "—",
+      c.delivered ? `${c.openRate}%` : "—",
+      c.status,
+    ]);
   }
 
   function emptyChartPath() {
@@ -98,13 +149,6 @@
     const H = 220;
     const padT = 14;
     const padB = 16;
-    const match =
-      state.metric === "Opened"
-        ? /opened|clicked/i
-        : state.metric === "Clicked"
-          ? /clicked/i
-          : /delivered|opened|clicked/i;
-
     const now = new Date();
     const buckets = [];
     if (state.range === "This year") {
@@ -119,10 +163,13 @@
       }
     }
     const idx = Object.fromEntries(buckets.map((b, i) => [b.key, i]));
-    for (const m of messages) {
-      if (!match.test(m.status || "")) continue;
-      const key = buckets[0].mode === "month" ? (m.createdAt || "").slice(0, 7) : (m.createdAt || "").slice(0, 10);
-      if (idx[key] != null) buckets[idx[key]].n += 1;
+    // The server already counts each day, including opens and clicks, which
+    // cannot be derived from a message's status.
+    const field =
+      state.metric === "Opened" ? "opened" : state.metric === "Clicked" ? "clicked" : "delivered";
+    for (const point of (figures && figures.series) || []) {
+      const key = buckets[0] && buckets[0].mode === "month" ? point.date.slice(0, 7) : point.date;
+      if (idx[key] != null) buckets[idx[key]].n += point[field] || 0;
     }
 
     const max = Math.max(1, ...buckets.map((b) => b.n));
