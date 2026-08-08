@@ -398,6 +398,65 @@
     );
   }
 
+
+  /**
+   * Hand the message to the sending engine and report exactly what it said.
+   *
+   * The composer used to write a row straight into the store, which looked
+   * like success and produced a message that was never actually sent. Every
+   * send now goes through the server, and its answer — queued, suppressed,
+   * bad address, unverified domain — is what the person sees.
+   */
+  async function sendNow({ to, subject, text, html, stream, from, replyTo, sendAt }) {
+    const workspaceId =
+      (store().get && store().get().selectedWorkspaceId) ||
+      (store().list("workspaces")[0] || {}).id ||
+      null;
+    const recipients = Array.isArray(to) ? to : [to];
+    const results = [];
+    for (const recipient of recipients) {
+      try {
+        const res = await fetch("/api/platform/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            workspaceId,
+            to: recipient,
+            subject,
+            text,
+            html,
+            stream: String(stream || "transactional").toLowerCase(),
+            from,
+            replyTo,
+            sendAt: sendAt || null,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        results.push(
+          res.ok
+            ? { ok: true, to: recipient, id: data.message && data.message.id }
+            : { ok: false, to: recipient, error: data.error || `Failed (${res.status})` }
+        );
+      } catch {
+        results.push({ ok: false, to: recipient, error: "Could not reach the server" });
+      }
+    }
+    return results;
+  }
+
+  function reportSend(results) {
+    const ok = results.filter((r) => r.ok);
+    const bad = results.filter((r) => !r.ok);
+    if (ok.length && !bad.length) {
+      toast(ok.length === 1 ? `Queued for delivery · ${ok[0].id}` : `Queued ${ok.length} messages`);
+    } else if (ok.length && bad.length) {
+      toast(`Queued ${ok.length}, ${bad.length} refused: ${bad[0].error}`);
+    } else {
+      toast(bad[0] ? bad[0].error : "Nothing was sent");
+    }
+  }
+
   function bindModal(type) {
     const m = document.querySelector(".se-modal");
     m.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => m.remove()));
@@ -409,13 +468,46 @@
       };
     });
     m.querySelector('[data-confirm="schedule"]')?.addEventListener("click", () => {
-      const queued = store().queueMessage({
-        ...state,
-        status: "Scheduled",
-        to: state.to,
-      });
+      const choice = m.dataset.schedule || "Now";
+      // "Schedule" used to write a row nothing ever sent. It now sets a real
+      // send time, which the queue honours — it will not touch the message
+      // before then.
+      let sendAt = null;
+      if (choice.startsWith("Tomorrow")) {
+        const t = new Date();
+        t.setDate(t.getDate() + 1);
+        t.setHours(9, 0, 0, 0);
+        sendAt = t.toISOString();
+      } else if (choice === "Custom") {
+        const answer = prompt("Send at (YYYY-MM-DD HH:MM, your local time):");
+        if (!answer) return;
+        const when = new Date(answer.replace(" ", "T"));
+        if (Number.isNaN(when.getTime())) {
+          toast("That is not a valid date and time");
+          return;
+        }
+        sendAt = when.toISOString();
+      }
+      if (!state.to.length || !state.subject.trim()) {
+        m.remove();
+        toast("Add a recipient and subject first");
+        return;
+      }
       m.remove();
-      toast(`Scheduled · ID ${queued?.id || "saved"}`);
+      sendNow({
+        from: state.from,
+        to: [...state.to],
+        subject: state.subject,
+        text: state.body,
+        html: state.html,
+        stream: state.stream,
+        sendAt,
+      }).then((results) => {
+        reportSend(results);
+        if (sendAt && results.some((r) => r.ok)) {
+          toast(`Scheduled for ${new Date(sendAt).toLocaleString()}`);
+        }
+      });
     });
     m.querySelector("[data-real-file]")?.addEventListener("change", (e) => {
       const f = e.target.files?.[0];
@@ -459,17 +551,16 @@
         toast("Enter a valid test email");
         return;
       }
-      const queued = store().queueMessage({
+      m.remove();
+      toast(`Sending test to ${v}…`);
+      sendNow({
         from: state.from,
         to: [v],
         subject: `[TEST] ${state.subject || "Untitled"}`,
-        body: state.body,
+        text: state.body,
         html: state.html,
         stream: state.stream,
-        status: "Queued",
-      });
-      m.remove();
-      toast(`Test queued for ${v} · ID ${queued?.id || "saved"}`);
+      }).then(reportSend);
     });
     m.querySelector('[data-confirm="send"]')?.addEventListener("click", () => {
       if (!state.to.length || !state.subject.trim()) {
@@ -482,17 +573,17 @@
         toast("Select a sender first");
         return;
       }
-      const queued = store().queueMessage({
+      const outgoing = {
         from: state.from,
         to: [...state.to],
         subject: state.subject,
-        body: state.body,
+        text: state.body,
         html: state.html,
         stream: state.stream,
-        status: "Queued",
-        attachments: [...state.attachments],
-      });
+      };
       m.remove();
+      sendNow(outgoing).then(reportSend);
+      const queued = null;
       state = { ...defaultState(), from: state.from, stream: state.stream, reply: state.reply };
       render();
       const id = queued?.id || "—";

@@ -147,13 +147,17 @@ page = page.replace(
   (_m, path) => `${path}?v=${shortHash(readFileSync(file, "utf8"))}`
 );
 
-// Our own scripts and stylesheets in public/.
-page = page.replace(/\/(platform-[\w-]+|auth-polish)\.(js|css)(\?v=[\w.]+)?/g, (m, name, ext) => {
+// Every script and stylesheet we serve from public/. A hand-kept list of
+// prefixes used to live here and quietly missed files — an unstamped asset is
+// a file that browsers keep serving from cache after we have changed it, which
+// is the hardest kind of bug to see because it only happens to people who
+// visited before.
+page = page.replace(/\/([\w-]+)\.(js|css)(\?v=[\w.]+)?/g, (m, name, ext) => {
   const assetPath = new URL(`../public/${name}.${ext}`, import.meta.url).pathname;
   try {
     return `/${name}.${ext}?v=${shortHash(readFileSync(assetPath, "utf8"))}`;
   } catch {
-    return m; // file not in this repo — leave the reference alone
+    return m; // not one of ours (the hashed bundle, a CDN URL) — leave it alone
   }
 });
 
