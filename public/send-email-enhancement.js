@@ -27,6 +27,9 @@
   // account can send on its first day instead of waiting on a domain purchase
   // and a DNS propagation. Filled in from the server; empty until it answers.
   let platformSender = "";
+  // null until the server has answered, so the page does not accuse the
+  // platform of being unconfigured while it is still asking.
+  let deliveryReady = null;
 
   function defaultState() {
     const ws = S()?.currentWorkspace?.();
@@ -66,12 +69,11 @@
     fetch("/api/platform/send-status", { credentials: "same-origin" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!d || !d.defaultSender) return;
-        platformSender = d.defaultSender;
-        if (!state.from) {
-          state.from = platformSender;
-          if (document.querySelector(".se-wrap")) render();
-        }
+        if (!d) return;
+        deliveryReady = !!(d.mailer && d.mailer.configured);
+        platformSender = d.defaultSender || "";
+        if (platformSender && !state.from) state.from = platformSender;
+        if (document.querySelector('[data-route="send"]')) render();
       })
       .catch(() => {});
   }
@@ -126,6 +128,11 @@
           <small>MESSAGE COMPOSER</small>
           <h1>Send email</h1>
           <p>Compose a real message for this workspace. Nothing is pre-filled with demo content.</p>
+          ${
+            deliveryReady === false
+              ? `<div class="se-notice">Email delivery is not set up on this platform yet, so nothing can be sent. An administrator needs to configure the mail server.</div>`
+              : ""
+          }
         </div>
         <div class="se-actions">
           <button type="button" class="se-btn" data-act="draft">${I("save")} Save draft</button>
@@ -594,7 +601,15 @@
       }
       if (!state.from) {
         m.remove();
-        toast("Select a sender first");
+        // "Select a sender" is only true advice when there is a sender to
+        // select. When delivery is unconfigured there is none, and telling
+        // someone to pick one sends them looking for something that is not
+        // there.
+        toast(
+          deliveryReady === false
+            ? "Email delivery is not set up on this platform yet"
+            : "Select a sender first"
+        );
         return;
       }
       const outgoing = {
