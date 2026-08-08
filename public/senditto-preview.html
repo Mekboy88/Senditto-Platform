@@ -164,6 +164,7 @@
     <link rel="stylesheet" href="/platform-enterprise.css?v=08eb00ca4c">
     <link rel="stylesheet" href="/platform-settings.css?v=3ca99cf211">
     <link rel="stylesheet" href="/platform-dashboard.css?v=1b35cdf45a">
+    <link rel="stylesheet" href="/platform-campaigns.css?v=0b73c0cb97">
     <link rel="stylesheet" href="/platform-crm.css?v=cb25fda47c">
     <link rel="stylesheet" href="/platform-templates-pro.css?v=71d75e0c0f">
     <link rel="stylesheet" href="/auth-polish.css?v=54ffbcf346">
@@ -174,7 +175,7 @@
     <!-- Core store + stable router (outside React) -->
     <script src="/platform-store.js?v=f017a2ede6"></script>
     <!-- Makes the store a live view of the control database. -->
-    <script src="/platform-sync.js?v=7d1aaacc2b"></script>
+    <script src="/platform-sync.js?v=47ad0f0c98"></script>
     <!-- Customer-facing AI assistant, scoped to the signed-in workspace. -->
     <script src="/platform-assistant.js?v=04e0bc3347"></script>
     <!-- platform-api.js is retired: platform-auth.js signs in and
@@ -215,5 +216,9 @@
     <script src="/platform-final-pass.js?v=80db90ccb0"></script>
     <script src="/platform-activity-pro.js?v=29a5776b85"></script>
     <script src="/platform-analytics-detail.js?v=67095fae5f"></script>
+    <!-- Campaigns: the bundle ships an empty shell whose buttons do nothing.
+         This must be the last page module loaded — several of the scripts
+         above assign SendittoUI.campaigns, and the last assignment wins. -->
+    <script src="/platform-campaigns.js?v=14d3996845"></script>
   </body>
 </html>

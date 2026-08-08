@@ -130,11 +130,32 @@
       workspaceId: c.workspace_id,
       name: c.name,
       subject: c.subject,
+      preheader: c.preheader || "",
+      bodyHtml: c.body_html || "",
+      bodyText: c.body_text || "",
+      fromEmail: c.from_email || "",
+      replyTo: c.reply_to || "",
+      audienceKind: c.audience_kind || "subscribed",
+      audienceTag: c.audience_tag || "",
+      audience: c.audience,
+      audienceSize: c.audience_size ?? 0,
       status: c.status,
-      sent: c.sent,
-      opens: c.opens,
-      clicks: c.clicks,
+      // These come from the messages the campaign really sent. The old
+      // mapping read c.opens and c.clicks, which the database has never had,
+      // so every campaign showed blank engagement for ever.
+      sent: c.sent ?? 0,
+      delivered: c.delivered ?? 0,
+      bounced: c.bounced ?? 0,
+      inFlight: c.inFlight ?? 0,
+      opens: c.opened ?? 0,
+      clicks: c.clicked ?? 0,
+      openRate: c.openRate ?? 0,
+      clickRate: c.clickRate ?? 0,
+      deliveryRate: c.deliveryRate ?? 0,
+      scheduledFor: c.scheduled_for || null,
+      lastSentAt: c.last_sent_at || null,
       createdAt: c.created_at,
+      updatedAt: c.updated_at,
     }),
     webhooks: (w) => ({
       id: w.id,
@@ -153,6 +174,18 @@
     if (out.workspaceId) out.workspace_id = out.workspaceId;
     if (collection === "domains" && out.name && !out.domain) out.domain = out.name;
     if (collection === "keys" && out.lastUsedAt) delete out.lastUsedAt;
+    if (collection === "campaigns") {
+      // Status, counts and rates all describe what the campaign has done.
+      // Sending them back would be the interface telling the database what
+      // happened, which is exactly backwards.
+      for (const derived of [
+        "status", "sent", "delivered", "bounced", "inFlight", "opens", "clicks",
+        "openRate", "clickRate", "deliveryRate", "audience", "audienceSize",
+        "scheduledFor", "lastSentAt",
+      ]) {
+        delete out[derived];
+      }
+    }
     delete out.createdAt;
     delete out.updatedAt;
     return out;
