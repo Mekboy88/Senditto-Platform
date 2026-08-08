@@ -22,6 +22,52 @@
   const initials = (em) => { const p = String(em || "?").split(/[@._-]/).filter(Boolean); return ((p[0]?.[0] || "?") + (p[1]?.[0] || "")).toUpperCase(); };
   const toOf = (m) => (Array.isArray(m.to) ? m.to[0] : m.to) || "—";
 
+
+  const EVENT_LABEL = {
+    queued: "Queued",
+    sending: "Sending",
+    delivered: "Delivered",
+    opened: "Opened",
+    clicked: "Clicked",
+    bounced: "Bounced",
+    failed: "Failed",
+    retry_scheduled: "Retry scheduled",
+  };
+  const EVENT_TONE = (t) =>
+    /delivered|opened|clicked/.test(t) ? "ok" : /queued|sending|retry/.test(t) ? "wait" : "bad";
+
+  /**
+   * The message's real history: one entry per step the server recorded, with
+   * the time it happened and what the receiving server said. If no events have
+   * arrived yet, say so rather than inventing a plausible-looking sequence.
+   */
+  function timelineHtml(m, s) {
+    const events = (s.list("messageEvents") || [])
+      .filter((e) => e.messageId === m.id)
+      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+    if (!events.length) {
+      return `<div class="act-log"><p class="sd-mut">No delivery events recorded for this message yet.</p></div>`;
+    }
+
+    const when = (iso) => {
+      try { return new Date(iso).toLocaleString(); } catch { return iso; }
+    };
+    return `
+      <div class="act-log">
+        ${events.map((e) => `
+          <div class="act-log-row ${EVENT_TONE(e.type)}">
+            <i></i>
+            <b>${esc(EVENT_LABEL[e.type] || e.type)}</b>
+            <time>${esc(when(e.createdAt))}</time>
+            ${e.attempt > 1 ? `<span class="act-log-try">attempt ${e.attempt}</span>` : ""}
+            ${e.providerResponse || e.detail
+              ? `<code>${esc(String(e.providerResponse || e.detail).slice(0, 160))}</code>`
+              : ""}
+          </div>`).join("")}
+      </div>`;
+  }
+
   function render(root) {
     const s = S();
     if (!s) throw new Error("Platform store is still loading. Click Try again.");
@@ -98,14 +144,14 @@
           <button class="cr-x" data-close>${svg("close")}</button>
         </div>
         <div class="cr-modal-body">
-          <div class="act-tl">
-            ${STAGES.map((sg, i) => `
-              <div class="act-tl-step ${i <= reach && !failed ? "done" : ""} ${failed && i === 1 ? "fail" : ""}">
-                <i>${i <= reach && !failed ? svg("check") : failed && i === 1 ? svg("close") : ""}</i><span>${failed && i === 1 ? "Failed" : sg}</span>
-              </div>${i < STAGES.length - 1 ? '<em class="act-tl-bar"></em>' : ""}`).join("")}
-          </div>
+          ${timelineHtml(m, s)}
           <div class="dm-recs" style="margin-top:16px">
-            ${[["To", toOf(m)], ["From", m.from || "—"], ["Stream", m.stream || "—"], ["Sent", s.formatRelative?.(m.createdAt) || "—"], ["Latency", m.latency || "—"]]
+            ${[["To", toOf(m)], ["From", m.from || "—"], ["Stream", m.stream || "—"],
+               ["Sent", s.formatRelative?.(m.createdAt) || "—"],
+               ["Opens", String(m.opens ?? 0)], ["Clicks", String(m.clicks ?? 0)],
+               ["Attempts", String(m.attempts ?? 1)],
+               ["DKIM signed", m.dkimSigned ? "yes" : "no"],
+               ["Last error", m.lastError || "—"]]
               .map(([k, v]) => `<div class="dm-rec" style="grid-template-columns:120px 1fr"><span class="dm-type" style="background:#eef2f8;color:#47566d">${k}</span><code>${esc(v)}</code></div>`).join("")}
             <div class="dm-rec" style="grid-template-columns:120px 1fr auto"><span class="dm-type" style="background:#eef2f8;color:#47566d">Message ID</span><code>${esc(m.id)}</code><button class="cr-ic" data-copyid title="Copy ID">${svg("copy")}</button></div>
           </div>

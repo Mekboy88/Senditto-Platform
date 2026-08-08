@@ -92,6 +92,7 @@
       templates: [],
       campaigns: [],
       messages: [],
+      messageEvents: [],
       logs: [],
       audit: [],
       suppressions: [],

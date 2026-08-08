@@ -78,3 +78,38 @@
 @media(max-width:640px){
   .pp-dns-row{grid-template-columns:1fr;gap:6px}
 }
+
+/* —— Email activity: the message's real delivery history —— */
+.act-log { display: grid; gap: 8px; margin: 4px 0 2px; }
+.act-log-row {
+  display: grid;
+  grid-template-columns: 10px 128px auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #e6ebf3;
+  border-radius: 10px;
+  background: #fbfcff;
+  font-size: 13px;
+}
+.act-log-row > i { width: 9px; height: 9px; border-radius: 50%; background: #9aa7ba; }
+.act-log-row.ok > i { background: #2fa36b; }
+.act-log-row.wait > i { background: #e0a422; }
+.act-log-row.bad > i { background: #dc5b5b; }
+.act-log-row b { font-weight: 650; color: #17233a; }
+.act-log-row time { color: #6b7a90; font-size: 12px; white-space: nowrap; }
+.act-log-row code {
+  grid-column: 1 / -1;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #48566c; background: #eef2f8; border-radius: 7px; padding: 6px 9px;
+  word-break: break-word;
+}
+.act-log-try {
+  font-size: 11px; font-weight: 650; color: #7a5a12;
+  background: #fdf3dc; border-radius: 999px; padding: 2px 8px;
+}
+@media (prefers-color-scheme: dark) {
+  .act-log-row { background: #0f141b; border-color: #232c38; }
+  .act-log-row b { color: #e6edf3; }
+  .act-log-row code { background: #161d26; color: #adbac7; }
+}

@@ -93,6 +93,11 @@
       status: m.status,
       opens: m.opens,
       clicks: m.clicks,
+      attempts: m.attempts,
+      lastError: m.last_error,
+      providerResponse: m.provider_response,
+      dkimSigned: m.dkim_signed,
+      sentAt: m.sent_at,
       createdAt: m.created_at,
     }),
     suppressions: (s) => ({
@@ -161,6 +166,24 @@
       for (const [local, remote] of Object.entries(REMOTE)) {
         const rows = state[remote];
         if (Array.isArray(rows)) s.replaceAll(local, rows.map(mapRow[local]));
+      }
+      // Every step each message took, so the activity view can show what
+      // actually happened rather than guessing from the current status.
+      if (Array.isArray(state.messageEvents)) {
+        s.replaceAll(
+          "messageEvents",
+          state.messageEvents.map((e) => ({
+            id: e.id,
+            messageId: e.message_id,
+            workspaceId: e.workspace_id,
+            stream: e.stream,
+            type: e.type,
+            attempt: e.attempt,
+            detail: e.detail,
+            providerResponse: e.provider_response,
+            createdAt: e.created_at,
+          }))
+        );
       }
       if (Array.isArray(state.logs)) {
         s.replaceAll(
