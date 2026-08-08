@@ -122,3 +122,23 @@
   .tp2-grid { grid-template-columns: 1fr 1fr; }
   .tp2-thumb { height: 170px; }
 }
+
+/* Confirmation for actions that reach the server, so a design that failed to
+   save does not look identical to one that saved. */
+.tp2-toast {
+  position: fixed;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  padding: 11px 17px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  max-width: min(560px, 92vw);
+  background: #11151c;
+  color: #f2f4f8;
+  box-shadow: 0 12px 34px rgba(8, 10, 16, 0.3);
+}
+@media (prefers-color-scheme: dark) {
+  .tp2-toast { background: #e9edf4; color: #11151c; }
+}

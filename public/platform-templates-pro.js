@@ -1,10 +1,16 @@
 /**
  * Template Studio v2 — overrides the "templates" route.
- * 30 built-in responsive email designs (table-based, inline styles, 600px
- * desktop / fluid mobile), a workspace brand kit (logo, colors, background,
- * footer) applied live, desktop/mobile preview, and a strict allowlist HTML
- * sanitizer so user templates can never contain scripts, forms, iframes,
- * event handlers or javascript:/unsafe URLs. No external requests required.
+ * The built-in designs come from the database, so this page and the operator
+ * console show the same library rather than each carrying a copy that drifts.
+ * A workspace brand kit (logo, colours, background, footer) is applied by the
+ * server when it renders them, and there is a desktop/mobile preview.
+ *
+ * A strict allowlist sanitizer runs over anything a person wrote, so a saved
+ * template can never contain scripts, forms, iframes, event handlers or unsafe
+ * URLs. Library HTML is not put through it: it comes from our own server,
+ * which sanitizes on the way in, and the browser copy strips the <style> block
+ * that carries the media queries — which would show a "mobile" preview that
+ * could not reflow.
  */
 (() => {
   const S = () => window.SendittoStore;
@@ -70,6 +76,15 @@
 
   const BG_PRESETS = [["Mist","#f4f6fb"],["Paper","#ffffff"],["Sand","#faf6ef"],["Mint","#f1faf5"],["Lavender","#f6f4fc"],["Sky","#eff6ff"]];
 
+  function toast(text) {
+    document.querySelector(".tp2-toast")?.remove();
+    const el = document.createElement("div");
+    el.className = "tp2-toast";
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3600);
+  }
+
   function brand() {
     const st = S()?.snapshot?.()?.settings || {};
     const ws = S()?.currentWorkspace?.() || {};
@@ -85,6 +100,8 @@
     const s = S();
     const cur = brand();
     s.setSettings?.({ ...(s.snapshot?.()?.settings || {}), brand: { ...cur, ...patch } });
+    // The server renders the library with the brand, so it has to be asked again.
+    libraryState = "idle";
   }
 
   /* ================= email building blocks (table-based, inline) ================= */
@@ -117,45 +134,61 @@
 </table></td></tr></table></body>`;
   }
 
-  /* ================= 30 template definitions ================= */
+  /* ================= the shared design library =================
+     These used to be defined here, in this file, so the operator studio and
+     the product each had their own set that drifted apart. They now come from
+     the database, which renders them with the workspace's brand — one library,
+     improved in one place. */
 
-  const T = (id, name, category, subject, pre, build) => ({ id, name, category, subject, pre, build });
-  const DEFS = [
-    T("welcome","Welcome","Onboarding","Welcome to {{product}} 👋","Your account is ready",(b)=>heroIcon(b,"👋")+h1("Welcome, {{name}}!")+p("Your account is ready. You're three small steps away from sending your first email — it takes minutes.")+btn(b,"Open your dashboard")),
-    T("getting-started","Getting started checklist","Onboarding","Your {{product}} setup checklist","3 steps to go live",(b)=>badge(b,"Getting started")+h1("Let's get you live")+p("Follow these steps and your first real email is minutes away.")+featureRow("🔑","Create an API key","Scoped credentials for your app in one click.")+featureRow("🌐","Verify your domain","Add SPF and DKIM so inbox providers trust you.")+featureRow("✉️","Send a test","One request — see it arrive.")+btn(b,"Continue setup")),
-    T("activate","Confirm your email","Onboarding","Confirm your email address","One click to activate",(b)=>heroIcon(b,"✅")+h1("Confirm your email")+p("Tap the button below to verify <strong>{{email}}</strong> and activate your account.")+btn(b,"Confirm email")+p("<small style='color:#9aa5b4'>If you didn't create an account, you can safely ignore this.</small>")),
-    T("trial-start","Trial started","Onboarding","Your free trial has started","14 days, full power",(b)=>badge(b,"Free trial")+h1("Your 14-day trial is live")+p("Everything is unlocked — send, automate and track without limits until {{trial_end}}.")+btn(b,"Explore features")),
-    T("profile","Complete your profile","Onboarding","One last step, {{name}}","Complete your profile",(b)=>heroIcon(b,"🪪")+h1("Finish setting up")+p("Add your company details so invoices and sending identity are correct.")+btn(b,"Complete profile")),
-    T("otp","One-time code","Security","Your verification code","Code inside — expires in 10 minutes",(b)=>heroIcon(b,"🔐")+h1("Your verification code")+p("Use this code to finish signing in. It expires in <strong>10 minutes</strong>.")+codeBox(b)+p("<small style='color:#9aa5b4'>Never share this code. Our team will never ask for it.</small>")),
-    T("reset","Password reset","Security","Reset your password","Reset link inside",(b)=>heroIcon(b,"🔁")+h1("Reset your password")+p("Someone requested a password reset for <strong>{{email}}</strong>. The link is valid for 30 minutes.")+btn(b,"Choose a new password")+p("<small style='color:#9aa5b4'>Didn't request this? Your account is safe — ignore this email.</small>")),
-    T("new-device","New sign-in alert","Security","New sign-in to your account","Was this you?",(b)=>heroIcon(b,"🖥️")+h1("New device signed in")+p("We noticed a sign-in from a new device.")+kv([["Device","{{device}}"],["Location","{{location}}"],["Time","{{time}}"]])+btn(b,"Review activity")+p("<small style='color:#9aa5b4'>If this was you, no action is needed.</small>")),
-    T("2fa-on","Two-step auth enabled","Security","Two-step verification is on","Your account is safer",(b)=>heroIcon(b,"🛡️")+h1("Two-step verification enabled")+p("From now on we'll ask for a one-time code when you sign in on a new device.")+btn(b,"Manage security settings")),
-    T("suspicious","Unusual activity","Security","We blocked an unusual attempt","Action may be required",(b)=>heroIcon(b,"⚠️")+h1("We blocked something unusual")+p("A sign-in attempt didn't match your usual pattern, so we stopped it. If this was you, verify to continue.")+btn(b,"Secure my account")),
-    T("invoice","Invoice","Billing","Invoice {{invoice_no}} is ready","Your invoice from {{product}}",(b)=>badge(b,"Invoice")+h1("Invoice {{invoice_no}}")+p("Your invoice for {{month}} is ready.")+kv([["Plan","{{plan}}"],["Period","{{period}}"],["Amount due","{{amount}}",true]])+btn(b,"Download invoice")),
-    T("receipt","Payment receipt","Billing","Payment received — thank you","Receipt inside",(b)=>heroIcon(b,"🧾")+h1("Thanks — payment received")+kv([["Payment method","{{method}}"],["Date","{{date}}"],["Total paid","{{amount}}",true]])+btn(b,"View receipt")),
-    T("pay-failed","Payment failed","Billing","Your payment didn't go through","Please update billing",(b)=>heroIcon(b,"💳")+h1("Payment failed")+p("We couldn't charge your card ending in {{last4}}. Service continues for now — please update billing to avoid interruption.")+btn(b,"Update payment method")),
-    T("renewal","Renewal reminder","Billing","Your plan renews on {{date}}","Renewal ahead",(b)=>badge(b,"Heads up")+h1("Your plan renews soon")+p("Your <strong>{{plan}}</strong> plan renews on <strong>{{date}}</strong> for {{amount}}. No action needed if all is well.")+btn(b,"Manage subscription")),
-    T("upgraded","Plan upgraded","Billing","Welcome to {{plan}} 🎉","Upgrade confirmed",(b)=>heroIcon(b,"🚀")+h1("You're on {{plan}} now")+p("Higher limits, more power. Your new capabilities are live immediately.")+btn(b,"See what's new")),
-    T("newsletter","Newsletter","Marketing","{{month}} at {{product}}","This month's highlights",(b)=>badge(b,"Newsletter")+h1("What's new this month")+p("A quick tour of what we shipped and what's coming next.",false)+featureRow("✨","Highlight one","Describe your biggest improvement here.")+featureRow("⚡","Highlight two","A second thing users will love.")+featureRow("🧩","Highlight three","One more update worth sharing.")+btn(b,"Read the full update")),
-    T("launch","Product launch","Marketing","Introducing {{feature}} 🚀","It's here",(b)=>heroIcon(b,"🚀")+h1("Introducing {{feature}}")+p("The thing you asked for is here. Built to be fast, simple and reliable.")+btn(b,"Try it now")),
-    T("feature","Feature announcement","Marketing","New: {{feature}}","Small update, big difference",(b)=>badge(b,"New feature")+h1("{{feature}} is live")+p("Here's what it does and why it matters — one clear paragraph.")+btn(b,"See how it works")),
-    T("offer","Discount offer","Marketing","{{percent}} off — this week only","A little thank-you",(b)=>heroIcon(b,"🎁")+h1("{{percent}} off, just for you")+p("Use the code below before {{deadline}}.")+codeBox(b)+btn(b,"Redeem offer")),
-    T("winback","Win-back","Marketing","We miss you, {{name}}","Here's what changed",(b)=>heroIcon(b,"💌")+h1("It's been a while")+p("A lot improved since your last visit. Come see — your workspace is exactly where you left it.")+btn(b,"Pick up where you left off")),
-    T("event","Event invitation","Marketing","You're invited: {{event}}","Save your seat",(b)=>badge(b,"Invitation")+h1("{{event}}")+kv([["Date","{{date}}"],["Time","{{time}}"],["Where","{{location}}"]])+btn(b,"Save my seat")),
-    T("webinar","Webinar reminder","Marketing","Starts in 1 hour: {{event}}","See you soon",(b)=>heroIcon(b,"🎥")+h1("Starting soon")+p("<strong>{{event}}</strong> begins in one hour. Grab a coffee and join us live.")+btn(b,"Join the webinar")),
-    T("order","Order confirmation","Transactional","Order {{order_no}} confirmed","Thanks for your order",(b)=>heroIcon(b,"🛍️")+h1("Order confirmed")+p("Thanks {{name}} — we're getting your order ready.")+kv([["Order","{{order_no}}"],["Items","{{items}}"],["Total","{{total}}",true]])+btn(b,"Track your order")),
-    T("shipping","Shipping update","Transactional","Your order is on its way 📦","Tracking inside",(b)=>heroIcon(b,"📦")+h1("It's on the way")+p("Your package left our warehouse and is heading to you.")+kv([["Carrier","{{carrier}}"],["Tracking","{{tracking_no}}"],["Arrives","{{eta}}"]])+btn(b,"Track package")),
-    T("delivered","Delivery confirmation","Transactional","Delivered ✅","Your order arrived",(b)=>heroIcon(b,"✅")+h1("Delivered")+p("Your order {{order_no}} was delivered. We hope you love it — tell us how it went.")+btn(b,"Leave a quick review")),
-    T("booking","Booking confirmation","Transactional","Booking confirmed — {{date}}","See you then",(b)=>heroIcon(b,"📅")+h1("You're booked")+kv([["What","{{service}}"],["When","{{date}} · {{time}}"],["Where","{{location}}"]])+btn(b,"Add to calendar")),
-    T("waitlist","Waitlist invite","Transactional","You're in — access granted","Your turn came up",(b)=>heroIcon(b,"🎟️")+h1("You're off the waitlist")+p("Your access to {{product}} is ready. Your invite expires in 7 days.")+btn(b,"Claim access")),
-    T("feedback","Feedback / NPS","Lifecycle","How are we doing?","60 seconds, one question",(b)=>heroIcon(b,"💬")+h1("Quick question")+p("How likely are you to recommend {{product}} to a friend? One tap — that's it.")+btn(b,"Give feedback")),
-    T("milestone","Milestone","Lifecycle","1 year with {{product}} 🎂","Thanks for being here",(b)=>heroIcon(b,"🎂")+h1("Happy anniversary, {{name}}!")+p("A year together — thank you. Here's a small look at what you achieved with us.")+kv([["Emails sent","{{stat_sent}}"],["Delivered","{{stat_delivered}}"],["Best month","{{stat_month}}"]])+btn(b,"See your year")),
-    T("referral","Referral invite","Lifecycle","Give {{reward}}, get {{reward}}","Share the love",(b)=>heroIcon(b,"🤝")+h1("Invite a friend")+p("Share your link — they get {{reward}}, you get {{reward}}. Everyone wins.")+btn(b,"Share your invite link")),
-  ];
-  const CATEGORIES = ["All","Onboarding","Security","Billing","Marketing","Transactional","Lifecycle"];
+  let DEFS = [];
+  let CATEGORIES = ["All"];
+  let SAMPLE = {};
+  let libraryState = "idle"; // idle | loading | ready | failed
 
-  function renderDef(def, b) {
-    return sanitizeEmailHtml(shell(b, def.build(b), def.pre));
+  function loadLibrary(root) {
+    if (libraryState === "loading") return;
+    libraryState = "loading";
+    const b = brand();
+    const payload = encodeURIComponent(
+      JSON.stringify({
+        name: b.logoText,
+        logoText: b.logoText,
+        accent: b.color,
+        page: b.bg,
+        radius: b.radius,
+        footer: b.footerNote,
+        address: b.footerAddress,
+      })
+    );
+    fetch(`/api/platform/templates/library?brand=${payload}`, { credentials: "same-origin" })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("unavailable"))))
+      .then((d) => {
+        DEFS = d.templates || [];
+        CATEGORIES = ["All", ...(d.categories || [])];
+        SAMPLE = d.sampleValues || {};
+        libraryState = "ready";
+        if (root && root.dataset.platformPage === "templates-pro") render(root);
+      })
+      .catch(() => {
+        libraryState = "failed";
+        if (root && root.dataset.platformPage === "templates-pro") render(root);
+      });
+  }
+
+  /** Fill the merge fields with samples, so a preview shows a real email. */
+  function withSamples(html) {
+    return String(html || "").replace(/\{\{\s*(\w+)\s*\}\}/g, (whole, key) =>
+      SAMPLE[key] === undefined ? whole : SAMPLE[key]
+    );
+  }
+
+  function renderDef(def) {
+    // Not re-sanitised: this came from our own server, which sanitises on the
+    // way in, and it is shown in a sandbox="" frame where nothing can run.
+    // Passing it through the browser sanitizer strips <style>, and with it the
+    // media queries — so the mobile preview would show a design that cannot
+    // reflow, which is worse than no preview at all.
+    return withSamples(def.html);
   }
 
   /* ================= page ================= */
@@ -182,6 +215,7 @@
     if (!s) throw new Error("Platform store is still loading. Click Try again.");
     root.dataset.platformPage = "templates-pro";
     const b = brand();
+    if (libraryState === "idle") loadLibrary(root);
     const saved = s.list("templates");
     const defs = DEFS.filter((d) => (cat === "All" || d.category === cat) && (!q || `${d.name} ${d.subject} ${d.category}`.toLowerCase().includes(q.toLowerCase())));
 
@@ -191,7 +225,13 @@
         <div>
           <small class="pp-kicker">CONTENT SYSTEM</small>
           <h1>Templates</h1>
-          <p>30 production-ready responsive designs — branded with your logo and colors, sanitized for safety.</p>
+          <p>${
+            libraryState === "failed"
+              ? "The design library could not be loaded. Check your connection and try again."
+              : libraryState === "ready"
+                ? `${DEFS.length} responsive designs — one column, 600px on a desktop, full width on a phone, each with a plain-text alternative.`
+                : "Loading the design library…"
+          }</p>
         </div>
         <div class="sd-head-actions">
           <button class="sd-btn" data-act="brand">${svg("brush")} Brand kit</button>
@@ -222,7 +262,7 @@
       <div class="tp2-grid">
         ${defs.map((d) => `
           <div class="tp2-card" data-id="${d.id}">
-            <div class="tp2-thumb"><iframe sandbox="" scrolling="no" srcdoc="${esc(renderDef(d, b))}" tabindex="-1"></iframe></div>
+            <div class="tp2-thumb"><iframe sandbox="" scrolling="no" srcdoc="${esc(renderDef(d))}" tabindex="-1"></iframe></div>
             <div class="tp2-meta">
               <div><b>${esc(d.name)}</b><small>${esc(d.subject)}</small></div>
               <span class="sd-chip mut">${esc(d.category)}</span>
@@ -257,8 +297,28 @@
         if (!def) return;
         if (el.dataset.tpl === "preview") { preview = id; mobile = false; render(root); }
         if (el.dataset.tpl === "use") {
-          s.add("templates", { name: def.name, category: def.category, subject: def.subject, html: renderDef(def, b), status: "Published", usage: 0, builtin: def.id });
-          s.logEvent?.("success", "templates.create", `Template “${def.name}” added to library`, {});
+          // The database saves it, so the stored copy gets its plain-text
+          // alternative, goes through the sanitiser and is encrypted at rest.
+          // Writing it from here skipped all three.
+          const wsId = (S()?.get && S().get().selectedWorkspaceId) || (s.list("workspaces")[0] || {}).id || null;
+          el.disabled = true;
+          fetch("/api/platform/templates/from-library", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: def.id, workspaceId: wsId }),
+          })
+            .then((r) => r.json().then((d) => ({ ok: r.ok, d })))
+            .then(({ ok, d }) => {
+              el.disabled = false;
+              if (!ok) return toast(d.error || "Could not save that design");
+              toast(`“${d.row.name}” added to your templates`);
+              window.SendittoSync?.refresh?.();
+            })
+            .catch(() => {
+              el.disabled = false;
+              toast("Could not reach the server");
+            });
         }
       })
     );
@@ -280,7 +340,7 @@
       return { title: row?.name || "Template", html: sanitizeEmailHtml(row?.html || "") };
     }
     const def = DEFS.find((x) => x.id === preview);
-    return { title: def?.name || "Template", html: def ? renderDef(def, b) : "" };
+    return { title: def?.name || "Template", html: def ? renderDef(def) : "" };
   }
 
   function openPreview(root, b) {
@@ -369,6 +429,17 @@
   }
 
   window.SendittoUI = window.SendittoUI || {};
-  window.SendittoUI.templates = render;
+  // template-system.js registers this key too, and the last script loaded
+  // wins. Defining the property keeps this page whichever order they load in.
+  try {
+    Object.defineProperty(window.SendittoUI, "templates", {
+      configurable: false,
+      enumerable: true,
+      get: () => render,
+      set: () => {},
+    });
+  } catch {
+    window.SendittoUI.templates = render;
+  }
   window.SendittoTemplates = { DEFS, renderDef, sanitizeEmailHtml, brand };
 })();
