@@ -23,9 +23,14 @@
       }[n] || ""
     }</svg>`;
 
+  // The address the platform itself sends from. Everyone may use it, so a new
+  // account can send on its first day instead of waiting on a domain purchase
+  // and a DNS propagation. Filled in from the server; empty until it answers.
+  let platformSender = "";
+
   function defaultState() {
     const ws = S()?.currentWorkspace?.();
-    const from = ws?.sending?.from || "";
+    const from = ws?.sending?.from || platformSender || "";
     return {
       from,
       to: [],
@@ -57,6 +62,20 @@
     return s;
   }
 
+  function loadSendingStatus() {
+    fetch("/api/platform/send-status", { credentials: "same-origin" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d || !d.defaultSender) return;
+        platformSender = d.defaultSender;
+        if (!state.from) {
+          state.from = platformSender;
+          if (document.querySelector(".se-wrap")) render();
+        }
+      })
+      .catch(() => {});
+  }
+
   function senders() {
     const s = store();
     const ws = s.currentWorkspace();
@@ -69,6 +88,7 @@
         const labeled = `Senditto <${addr}>`;
         if (!list.includes(labeled)) list.push(labeled);
       });
+    if (platformSender && !list.includes(platformSender)) list.push(platformSender);
     return list;
   }
 
@@ -622,6 +642,7 @@
   }
 
   function bootComposer() {
+    loadSendingStatus();
     try {
       const draft = JSON.parse(localStorage.getItem("senditto_send_draft_v2") || "null");
       if (draft && typeof draft === "object") {
