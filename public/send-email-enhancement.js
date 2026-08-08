@@ -503,9 +503,13 @@
         stream: state.stream,
         sendAt,
       }).then((results) => {
-        reportSend(results);
-        if (sendAt && results.some((r) => r.ok)) {
+        // One message, one toast. Reporting twice meant the second replaced
+        // the first, so a partial failure could be announced as a success.
+        const bad = results.filter((r) => !r.ok);
+        if (sendAt && !bad.length) {
           toast(`Scheduled for ${new Date(sendAt).toLocaleString()}`);
+        } else {
+          reportSend(results);
         }
       });
     });
@@ -582,22 +586,38 @@
         stream: state.stream,
       };
       m.remove();
-      sendNow(outgoing).then(reportSend);
-      const queued = null;
-      state = { ...defaultState(), from: state.from, stream: state.stream, reply: state.reply };
-      render();
-      const id = queued?.id || "—";
-      document.body.insertAdjacentHTML(
-        "beforeend",
-        `<div class="se-modal"><button class="se-backdrop" data-close></button><section class="se-dialog"><button class="se-close" data-close>✕</button><div class="se-modal-icon">✓</div><h2>Message queued</h2><p>Your message was saved to this workspace. Delivery will connect when the send pipeline is live.</p><div class="se-radio active"><b>Message ID</b><small style="font-family:ui-monospace,monospace">${id}</small></div><div class="se-modal-actions"><button class="se-btn" data-copy-mid>Copy ID</button><button class="se-btn primary" data-close>Done</button></div></section></div>`
-      );
-      const done = document.querySelector(".se-modal");
-      done.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => done.remove()));
-      done.querySelector("[data-copy-mid]")?.addEventListener("click", () => {
-        navigator.clipboard?.writeText(id);
-        toast("Message ID copied");
+      // Wait for the answer before saying anything. This used to announce
+      // "Message queued successfully" with an em dash for an ID the instant
+      // the button was pressed, which was a claim about a send that had not
+      // happened yet and might be refused.
+      sendNow(outgoing).then((results) => {
+        const ok = results.filter((r) => r.ok);
+        if (!ok.length) {
+          reportSend(results);
+          return;
+        }
+        // Only clear the composer once something really went.
+        state = { ...defaultState(), from: state.from, stream: state.stream, reply: state.reply };
+        render();
+        const bad = results.filter((r) => !r.ok);
+        const id = ok[0].id;
+        const heading = bad.length ? `Queued ${ok.length}, ${bad.length} refused` : "Message queued";
+        const detail = bad.length
+          ? esc(bad[0].error)
+          : ok.length === 1
+            ? "Accepted by the sending queue. Track it on Email activity."
+            : `${ok.length} messages accepted by the sending queue.`;
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          `<div class="se-modal"><button class="se-backdrop" data-close></button><section class="se-dialog"><button class="se-close" data-close>✕</button><div class="se-modal-icon">✓</div><h2>${heading}</h2><p>${detail}</p><div class="se-radio active"><b>Message ID</b><small style="font-family:ui-monospace,monospace">${esc(id)}</small></div><div class="se-modal-actions"><button class="se-btn" data-copy-mid>Copy ID</button><button class="se-btn primary" data-close>Done</button></div></section></div>`
+        );
+        const done = document.querySelector(".se-modal");
+        done.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => done.remove()));
+        done.querySelector("[data-copy-mid]")?.addEventListener("click", () => {
+          navigator.clipboard?.writeText(id);
+          toast("Message ID copied");
+        });
       });
-      toast("Message queued successfully");
     });
   }
 
